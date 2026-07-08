@@ -1,0 +1,39 @@
+# ===== 情报智能体生成器 · 后端依赖 =====
+# Python 3.10+
+
+# Web 框架
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# 数据层
+sqlalchemy==2.0.36
+
+# 配置
+pydantic==2.10.4
+pydantic-settings==2.7.1
+
+# LLM / Agent 引擎
+langgraph==0.2.60
+langchain-core==0.3.28
+langchain-openai==0.2.14          # DeepSeek/GLM 均走 OpenAI 兼容接口
+httpx==0.28.1
+
+# ===== 数据源（免 Key 免费优先） =====
+# 通用搜索：DuckDuckGo（免 Key）
+duckduckgo-search==7.2.1
+# 金融行情：yfinance（免 Key）
+yfinance==0.2.51
+# 论文：arXiv（免 Key）
+arxiv==2.1.3
+# RSS：feedparser（免 Key）
+feedparser==6.0.11
+# 网页爬取：readability 提取正文
+readability-lxml==0.8.1
+lxml[html_clean]==5.3.0
+
+# 定时调度
+apscheduler==3.11.3
+
+# ===== 可选升级（有 Key 时启用，无需可不装） =====
+# tavily-python==0.5.0            # Tavily 搜索（需 Key，有免费额度）
+# — Alpha Vantage / NewsAPI 走 httpx 直接调用，无需额外库

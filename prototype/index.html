@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>情报智能体生成器 · 原型</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    // —— Tailwind 配置：注入设计系统的双主题语义色 token ——
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Fira Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"Fira Code"', 'ui-monospace', 'monospace'],
+          },
+          colors: {
+            // 语义 token（亮色）
+            primary: { DEFAULT: '#1E40AF', on: '#FFFFFF' },
+            accent:  { DEFAULT: '#D97706', on: '#FFFFFF' },
+            status:  { running: '#3B82F6', done: '#22C55E', failed: '#EF4444', idle: '#64748B' },
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    /* —— CSS 变量：双主题。明暗共用同一组语义变量名，JS 只切换 html.dark —— */
+    :root {
+      --bg:        #F8FAFC;
+      --surface:   #FFFFFF;
+      --surface-2: #F1F5F9;
+      --border:    #DBEAFE;
+      --text:      #1E3A8A;
+      --text-muted:#64748B;
+      --ring:      #1E40AF;
+    }
+    html.dark {
+      --bg:        #0B1220;
+      --surface:   #131C2E;
+      --surface-2: #1B2640;
+      --border:    #243150;
+      --text:      #E2E8F0;
+      --text-muted:#94A3B8;
+      --ring:      #3B82F6;
+    }
+    body { background: var(--bg); color: var(--text); transition: background .2s, color .2s; }
+    .surface  { background: var(--surface);  }
+    .surface-2{ background: var(--surface-2); }
+    .border-c { border-color: var(--border); }
+    .text-muted-c { color: var(--text-muted); }
+    .ring-c:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--ring); }
+    /* 页面切换：只有 active 显示 */
+    .page { display: none; }
+    .page.active { display: block; }
+    /* 报告页 Markdown 排版 */
+    .prose-report h1 { font-size:1.5rem; font-weight:700; margin:0 0 .5rem; }
+    .prose-report h2 { font-size:1.2rem; font-weight:600; margin:1.6rem 0 .6rem; padding-bottom:.3rem; border-bottom:1px solid var(--border); }
+    .prose-report h3 { font-size:1.02rem; font-weight:600; margin:1.2rem 0 .4rem; color:var(--text); }
+    .prose-report p { margin:.5rem 0; line-height:1.7; color:var(--text); }
+    .prose-report ul { margin:.5rem 0; padding-left:1.2rem; list-style:disc; }
+    .prose-report li { margin:.3rem 0; line-height:1.6; }
+    .prose-report strong { font-weight:600; }
+    .prose-report blockquote {
+      border-left:3px solid var(--ring); padding:.5rem .9rem; margin:.6rem 0;
+      background:var(--surface-2); border-radius:0 .4rem .4rem 0;
+      font-size:.85rem; color:var(--text-muted);
+    }
+    .prose-report table { width:100%; border-collapse:collapse; margin:.8rem 0; font-size:.85rem; }
+    .prose-report th, .prose-report td { border:1px solid var(--border); padding:.45rem .7rem; text-align:left; }
+    .prose-report th { background:var(--surface-2); font-weight:600; }
+    .prose-report td { color:var(--text); }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+
+  <div class="flex min-h-screen">
+
+    <!-- ============ 侧栏导航（全局，所有页面共用） ============ -->
+    <aside class="surface border-c w-60 shrink-0 border-r flex flex-col">
+      <!-- Logo 区 -->
+      <div class="px-5 py-5 border-b border-c flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-primary text-primary-on flex items-center justify-center font-bold">情</div>
+        <div>
+          <div class="text-sm font-semibold leading-tight">情报智能体</div>
+          <div class="text-[11px] text-muted-c font-mono leading-tight">Generator</div>
+        </div>
+      </div>
+
+      <!-- 导航项 -->
+      <nav class="flex-1 px-3 py-4 space-y-1" id="nav">
+        <button data-route="dashboard" class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium ring-c cursor-pointer">
+          <span class="ico">▦</span> 仪表台
+        </button>
+        <button data-route="new" class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium ring-c cursor-pointer">
+          <span class="ico">＋</span> 新建智能体
+        </button>
+        <button data-route="reports" class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium ring-c cursor-pointer">
+          <span class="ico">▤</span> 报告
+        </button>
+        <button data-route="settings" class="nav-item w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium ring-c cursor-pointer">
+          <span class="ico">⚙</span> 设置
+        </button>
+      </nav>
+
+      <!-- 主题切换（底部） -->
+      <div class="px-3 py-4 border-t border-c">
+        <button id="theme-toggle" class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm surface-2 ring-c cursor-pointer border border-c">
+          <span id="theme-icon">☾</span> <span id="theme-label">暗色</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ============ 主内容区 ============ -->
+    <main class="flex-1 min-w-0">
+
+      <!-- ▼▼▼ 页面①：仪表台 ▼▼▼ -->
+      <section id="page-dashboard" class="page active">
+        <header class="px-8 py-6 flex items-center justify-between border-b border-c">
+          <div>
+            <h1 class="text-xl font-semibold">仪表台</h1>
+            <p class="text-sm text-muted-c mt-0.5">管理你的情报智能体，一键运行并查看实时进展</p>
+          </div>
+          <button data-route="new" class="goto bg-primary text-primary-on px-4 py-2 rounded-lg text-sm font-medium ring-c cursor-pointer hover:opacity-90 flex items-center gap-1.5">
+            <span>＋</span> 新建智能体
+          </button>
+        </header>
+
+        <!-- 状态摘要条 -->
+        <div class="px-8 py-5 grid grid-cols-3 gap-4">
+          <div class="surface border-c border rounded-xl px-4 py-3">
+            <div class="text-xs text-muted-c">智能体总数</div>
+            <div class="text-2xl font-semibold font-mono mt-1">3</div>
+          </div>
+          <div class="surface border-c border rounded-xl px-4 py-3">
+            <div class="text-xs text-muted-c">运行中</div>
+            <div class="text-2xl font-semibold font-mono mt-1 text-status-running">0</div>
+          </div>
+          <div class="surface border-c border rounded-xl px-4 py-3">
+            <div class="text-xs text-muted-c">累计报告</div>
+            <div class="text-2xl font-semibold font-mono mt-1">5</div>
+          </div>
+        </div>
+
+        <!-- 智能体卡片网格（mock 数据由 JS 渲染） -->
+        <div class="px-8 pb-10">
+          <h2 class="text-sm font-semibold text-muted-c mb-3">我的智能体</h2>
+          <div id="agent-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+        </div>
+      </section>
+
+      <!-- ▼▼▼ 页面②：生成智能体 ▼▼▼ -->
+      <section id="page-new" class="page">
+        <header class="px-8 py-6 border-b border-c">
+          <h1 class="text-xl font-semibold">新建智能体</h1>
+          <p class="text-sm text-muted-c mt-0.5">用自然语言描述你的情报需求，系统将自动解析意图并生成专属智能体</p>
+        </header>
+
+        <div class="px-8 py-8 max-w-3xl">
+          <!-- 领域快捷标签 -->
+          <label class="block text-xs font-semibold text-muted-c mb-2">情报领域（可选，留空则自动识别）</label>
+          <div id="domain-tags" class="flex flex-wrap gap-2 mb-6"></div>
+
+          <!-- 自然语言输入框（占主体） -->
+          <label class="block text-xs font-semibold text-muted-c mb-2">描述你的情报需求</label>
+          <div class="relative">
+            <textarea id="intent-input"
+              class="surface border-c border rounded-xl w-full p-4 text-sm leading-relaxed ring-c resize-none min-h-[140px] placeholder:text-muted-c/60"
+              placeholder="例如：追踪近期亚太地区军事部署与防务合作动态，重点关注美日韩三边演习与台海动向…"></textarea>
+            <div class="absolute bottom-3 right-3 text-[11px] text-muted-c font-mono" id="char-count">0 字</div>
+          </div>
+
+          <!-- 示例 chips -->
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <span class="text-xs text-muted-c">试试：</span>
+            <button class="example-chip text-xs surface-2 border-c border rounded-full px-3 py-1 ring-c cursor-pointer hover:border-primary">半导体先进制程进展</button>
+            <button class="example-chip text-xs surface-2 border-c border rounded-full px-3 py-1 ring-c cursor-pointer hover:border-primary">特斯拉 Q2 财报与舆情</button>
+            <button class="example-chip text-xs surface-2 border-c border rounded-full px-3 py-1 ring-c cursor-pointer hover:border-primary">大模型教育应用研究</button>
+          </div>
+
+          <!-- 生成按钮 -->
+          <div class="mt-6 flex items-center gap-3">
+            <button id="generate-btn"
+              class="bg-primary text-primary-on px-5 py-2.5 rounded-lg text-sm font-medium ring-c cursor-pointer hover:opacity-90 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+              <span>✦</span> 生成智能体
+            </button>
+            <span class="text-xs text-muted-c">解析意图 → 匹配工具集 → 生成配置</span>
+          </div>
+
+          <!-- 解析过程动画区（点生成后显示） -->
+          <div id="parse-result" class="mt-6 hidden"></div>
+        </div>
+      </section>
+      <!-- ▼▼▼ 页面③：智能体详情（含 SSE 实时运行流） ▼▼▼ -->
+      <section id="page-agent" class="page">
+        <!-- 头部信息区（由 JS 渲染） -->
+        <header id="agent-head" class="px-8 py-6 border-b border-c"></header>
+
+        <div class="px-8 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- 左：实时运行流（占 2 列） -->
+          <div class="lg:col-span-2 space-y-6">
+            <!-- 运行控制条 -->
+            <div id="run-control" class="surface border-c border rounded-xl p-4 flex items-center justify-between">
+              <div>
+                <div class="text-sm font-semibold">工作流执行</div>
+                <div class="text-xs text-muted-c mt-0.5">搜集 → 分析 → 结论，LangGraph 按节点顺序运行并实时推送</div>
+              </div>
+              <button id="run-btn"
+                class="bg-accent text-accent-on px-4 py-2 rounded-lg text-sm font-medium ring-c cursor-pointer hover:opacity-90 flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                ▶ 运行
+              </button>
+            </div>
+
+            <!-- SSE 步骤流容器 -->
+            <div id="sse-stream" class="surface border-c border rounded-xl p-5 hidden">
+              <div class="flex items-center justify-between mb-4">
+                <div class="text-sm font-semibold flex items-center gap-2">
+                  <span id="run-status-dot" class="w-2 h-2 rounded-full bg-status-running animate-pulse"></span>
+                  <span id="run-status-text">准备运行…</span>
+                </div>
+                <span class="text-[11px] text-muted-c font-mono">SSE · /api/agents/{id}/run</span>
+              </div>
+              <ol id="sse-steps" class="space-y-2"></ol>
+            </div>
+
+            <!-- 空态：未运行时 -->
+            <div id="run-empty" class="surface border-c border rounded-xl p-10 text-center text-sm text-muted-c">
+              点击「运行」开始执行，工作流步骤将在此实时显示
+            </div>
+          </div>
+
+          <!-- 右：元信息 + 工具集 -->
+          <div class="space-y-6">
+            <div class="surface border-c border rounded-xl p-4">
+              <div class="text-xs font-semibold text-muted-c mb-3">智能体信息</div>
+              <dl id="agent-meta" class="space-y-2.5 text-sm"></dl>
+            </div>
+            <div class="surface border-c border rounded-xl p-4">
+              <div class="text-xs font-semibold text-muted-c mb-3">已挂载工具集</div>
+              <div id="agent-tools" class="space-y-2"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 下方：历史运行列表 -->
+        <div class="px-8 pb-10">
+          <h2 class="text-sm font-semibold text-muted-c mb-3">历史运行</h2>
+          <div id="agent-runs" class="surface border-c border rounded-xl divide-y divide-[var(--border)] overflow-hidden"></div>
+        </div>
+      </section>
+      <!-- ▼▼▼ 页面④：编辑智能体 ▼▼▼ -->
+      <section id="page-edit" class="page">
+        <header class="px-8 py-6 border-b border-c">
+          <div class="flex items-center gap-2 mb-1">
+            <button onclick="go('agent')" class="text-xs text-muted-c hover:text-primary ring-c">← 详情</button>
+          </div>
+          <h1 class="text-xl font-semibold">编辑智能体</h1>
+          <p class="text-sm text-muted-c mt-0.5">修改配置后保存，不影响已有的历史运行记录</p>
+        </header>
+
+        <div class="px-8 py-6 max-w-2xl space-y-6">
+          <!-- 名称 -->
+          <div>
+            <label class="block text-xs font-semibold text-muted-c mb-2">智能体名称</label>
+            <input id="edit-name" type="text"
+              class="surface border-c border rounded-lg w-full px-3 py-2 text-sm ring-c" />
+          </div>
+
+          <!-- 工具集开关 -->
+          <div>
+            <label class="block text-xs font-semibold text-muted-c mb-2">工具集</label>
+            <div id="edit-tools" class="surface border-c border rounded-xl divide-y divide-[var(--border)] overflow-hidden"></div>
+            <p class="text-[11px] text-muted-c mt-2">关闭的工具在运行时将跳过；若所有领域 API 均未配置 Key，将自动降级为纯搜索模式</p>
+          </div>
+
+          <!-- 提示词模板 -->
+          <div>
+            <label class="block text-xs font-semibold text-muted-c mb-2">提示词模板</label>
+            <textarea id="edit-prompt"
+              class="surface border-c border rounded-lg w-full p-3 text-sm leading-relaxed ring-c resize-none min-h-[120px] font-mono"></textarea>
+            <p class="text-[11px] text-muted-c mt-2">定义智能体在分析节点的人设与关注重点</p>
+          </div>
+
+          <!-- 操作按钮 -->
+          <div class="flex items-center gap-3 pt-2">
+            <button id="edit-save"
+              class="bg-primary text-primary-on px-4 py-2 rounded-lg text-sm font-medium ring-c cursor-pointer hover:opacity-90">保存</button>
+            <button onclick="go('agent')"
+              class="surface-2 border-c border px-4 py-2 rounded-lg text-sm ring-c cursor-pointer hover:border-primary">取消</button>
+            <span id="edit-saved" class="text-xs text-status-done hidden">✓ 已保存</span>
+          </div>
+        </div>
+      </section>
+      <!-- ▼▼▼ 页面⑤：报告详情 ▼▼▼ -->
+      <section id="page-report" class="page">
+        <header class="px-8 py-6 border-b border-c">
+          <div class="flex items-center gap-2 mb-1 text-xs text-muted-c">
+            <button onclick="go('agent')" class="hover:text-primary ring-c">← 智能体详情</button>
+            <span>/</span><span id="report-bread" class="font-mono">报告</span>
+          </div>
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h1 id="report-title" class="text-xl font-semibold">情报分析报告</h1>
+              <p id="report-meta" class="text-sm text-muted-c mt-1"></p>
+            </div>
+            <button id="report-download"
+              class="bg-accent text-accent-on px-4 py-2 rounded-lg text-sm font-medium ring-c cursor-pointer hover:opacity-90 flex items-center gap-1.5 shrink-0">
+              ↓ 下载 .md
+            </button>
+          </div>
+        </header>
+
+        <div class="px-8 py-6 max-w-3xl">
+          <article id="report-body" class="surface border-c border rounded-xl p-8 prose-report"></article>
+        </div>
+      </section>
+      <section id="page-reports" class="page"></section>
+      <!-- ▼▼▼ 页面⑥：设置 ▼▼▼ -->
+      <section id="page-settings" class="page">
+        <header class="px-8 py-6 border-b border-c">
+          <h1 class="text-xl font-semibold">设置</h1>
+          <p class="text-sm text-muted-c mt-0.5">配置 LLM 与各领域数据源 API Key，未配置的领域将自动降级为纯搜索模式</p>
+        </header>
+
+        <div class="px-8 py-6 max-w-2xl space-y-6">
+          <!-- LLM 配置 -->
+          <div class="surface border-c border rounded-xl p-5">
+            <div class="text-sm font-semibold mb-1">LLM 引擎</div>
+            <p class="text-xs text-muted-c mb-3">选择生成与分析所用的语言模型</p>
+            <div class="grid grid-cols-2 gap-3 mb-4" id="llm-choice">
+              <button data-llm="deepseek" class="llm-card surface-2 border-c border rounded-lg p-3 text-left ring-c cursor-pointer">
+                <div class="text-sm font-medium">DeepSeek</div>
+                <div class="text-[11px] text-muted-c mt-0.5">deepseek-chat</div>
+              </button>
+              <button data-llm="glm" class="llm-card surface-2 border-c border rounded-lg p-3 text-left ring-c cursor-pointer">
+                <div class="text-sm font-medium">GLM</div>
+                <div class="text-[11px] text-muted-c mt-0.5">glm-4-plus</div>
+              </button>
+            </div>
+            <label class="block text-xs font-semibold text-muted-c mb-1.5">API Key</label>
+            <input id="llm-key" type="password" placeholder="sk-..."
+              class="surface border-c border rounded-lg w-full px-3 py-2 text-sm font-mono ring-c" />
+          </div>
+
+          <!-- 领域数据源 API Key -->
+          <div class="surface border-c border rounded-xl p-5">
+            <div class="text-sm font-semibold mb-1">领域数据源</div>
+            <p class="text-xs text-muted-c mb-3">以下为各领域专项工具所需的 API Key（Web Search / Tavily 为通用项）</p>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs font-medium mb-1">Tavily · 通用搜索</label>
+                <input data-key="tavily" type="password" placeholder="tvly-..."
+                  class="api-input surface border-c border rounded-lg w-full px-3 py-2 text-sm font-mono ring-c" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium mb-1">Alpha Vantage · 金融行情</label>
+                <input data-key="alpha_vantage" type="password" placeholder="AV-..."
+                  class="api-input surface border-c border rounded-lg w-full px-3 py-2 text-sm font-mono ring-c" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium mb-1">NewsAPI · 新闻</label>
+                <input data-key="newsapi" type="password" placeholder="n-..."
+                  class="api-input surface border-c border rounded-lg w-full px-3 py-2 text-sm font-mono ring-c" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 降级状态提示 -->
+          <div id="degrade-notice" class="rounded-xl p-4 border"></div>
+
+          <!-- 操作按钮 -->
+          <div class="flex items-center gap-3">
+            <button id="settings-save"
+              class="bg-primary text-primary-on px-4 py-2 rounded-lg text-sm font-medium ring-c cursor-pointer hover:opacity-90">保存到 .env</button>
+            <span id="settings-saved" class="text-xs text-status-done hidden">✓ 已保存</span>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    // ============================================================
+    //  mock 数据层 —— 模拟后端返回的 AgentConfig / RunRecord
+    // ============================================================
+    const DOMAIN_META = {
+      military: { label: '军事', color: '#DC2626' },
+      finance:  { label: '金融', color: '#059669' },
+      tech:     { label: '科技', color: '#3B82F6' },
+      education:{ label: '教育', color: '#7C3AED' },
+      company:  { label: '公司', color: '#D97706' },
+    };
+
+    const AGENTS = [
+      { id:'a1', name:'亚太防务动态监测', domain:'military',
+        intent:'追踪近期亚太地区军事部署与防务合作动态', lastRun:'2026-07-01 22:14', status:'completed', runs:2 },
+      { id:'a2', name:'半导体行业技术情报', domain:'tech',
+        intent:'梳理先进制程、Chiplet 与国产替代最新进展', lastRun:'2026-07-02 09:30', status:'completed', runs:3 },
+      { id:'a3', name:'特斯拉财务与舆情', domain:'finance',
+        intent:'分析 Tesla Q2 财报数据与市场情绪', lastRun:'—', status:'idle', runs:0 },
+    ];
+
+    const STATUS_META = {
+      completed: { dot:'#22C55E', text:'已完成' },
+      running:   { dot:'#3B82F6', text:'运行中' },
+      failed:    { dot:'#EF4444', text:'失败'   },
+      idle:      { dot:'#64748B', text:'空闲'   },
+    };
+
+    // —— 渲染仪表台卡片 ——
+    function renderDashboard() {
+      const grid = document.getElementById('agent-grid');
+      grid.innerHTML = AGENTS.map(a => {
+        const d = DOMAIN_META[a.domain];
+        const s = STATUS_META[a.status];
+        return `
+        <article class="surface border-c border rounded-xl p-4 cursor-pointer hover:border-primary transition-colors ring-c"
+                 onclick="go('agent', '${a.id}')">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded text-[11px] font-medium font-mono"
+                    style="background:${d.color}22;color:${d.color}">${d.label}</span>
+            </div>
+            <span class="flex items-center gap-1.5 text-[11px] text-muted-c">
+              <span class="w-1.5 h-1.5 rounded-full" style="background:${s.dot}"></span>${s.text}
+            </span>
+          </div>
+          <h3 class="font-semibold mt-2.5">${a.name}</h3>
+          <p class="text-xs text-muted-c mt-1 line-clamp-2">${a.intent}</p>
+          <div class="flex items-center justify-between mt-3 pt-3 border-t border-c text-[11px] text-muted-c">
+            <span>最近运行 ${a.lastRun}</span>
+            <span class="font-mono">${a.runs} 次运行</span>
+          </div>
+        </article>`;
+      }).join('');
+    }
+
+    // —— 渲染生成页 ——
+    let selectedDomain = null;
+    function renderNew() {
+      // 领域快捷标签
+      const wrap = document.getElementById('domain-tags');
+      wrap.innerHTML = Object.entries(DOMAIN_META).map(([key, d]) => `
+        <button data-domain="${key}"
+          class="domain-tag px-3 py-1.5 rounded-full text-xs font-medium border ring-c cursor-pointer transition-colors"
+          style="border-color:${d.color}55;color:${d.color}">
+          ${d.label}
+        </button>`).join('');
+      wrap.querySelectorAll('.domain-tag').forEach(b => b.onclick = () => {
+        selectedDomain = (selectedDomain === b.dataset.domain) ? null : b.dataset.domain;
+        wrap.querySelectorAll('.domain-tag').forEach(x => {
+          const on = x.dataset.domain === selectedDomain;
+          const dm = DOMAIN_META[x.dataset.domain];
+          x.style.background = on ? dm.color : 'transparent';
+          x.style.color = on ? '#fff' : dm.color;
+        });
+      });
+
+      const input = document.getElementById('intent-input');
+      const count = document.getElementById('char-count');
+      input.oninput = () => count.textContent = input.value.length + ' 字';
+
+      // 示例 chip 填入
+      document.querySelectorAll('.example-chip').forEach(c => c.onclick = () => {
+        input.value = c.textContent.trim();
+        input.dispatchEvent(new Event('input'));
+        input.focus();
+      });
+
+      // 重置结果区
+      document.getElementById('parse-result').classList.add('hidden');
+      document.getElementById('generate-btn').disabled = false;
+    }
+
+    // —— 模拟"生成智能体"的意图解析过程（原型：纯前端动画） ——
+    function runGenerate() {
+      const input = document.getElementById('intent-input');
+      const btn = document.getElementById('generate-btn');
+      const intent = input.value.trim();
+      if (!intent) { input.focus(); input.classList.add('ring-2','ring-status-failed');
+                      setTimeout(()=>input.classList.remove('ring-2','ring-status-failed'),800); return; }
+
+      btn.disabled = true;
+      const box = document.getElementById('parse-result');
+      box.classList.remove('hidden');
+
+      // 推断领域：按关键词 / 或用选中的
+      const guess = selectedDomain || guessDomain(intent);
+      const d = DOMAIN_META[guess];
+      const steps = [
+        { t: '解析意图', detail: `识别领域：<b style="color:${d.color}">${d.label}</b> · 提取主题与关键实体` },
+        { t: '匹配工具集', detail: `已为「${d.label}」领域挂载 ${domainTools(guess)} 套数据源` },
+        { t: '生成配置', detail: `智能体「${intent.slice(0,12)}…」配置已就绪` },
+      ];
+
+      box.innerHTML = `
+        <div class="surface border-c border rounded-xl p-5">
+          <div class="flex items-center gap-2 text-sm font-semibold mb-4">
+            <span class="w-2 h-2 rounded-full bg-status-running animate-pulse"></span>
+            正在生成智能体…
+          </div>
+          <ol id="parse-steps" class="space-y-3"></ol>
+          <div id="parse-actions" class="mt-5 hidden flex items-center gap-3 pt-4 border-t border-c"></div>
+        </div>`;
+
+      const ol = document.getElementById('parse-steps');
+      steps.forEach((s, i) => {
+        const li = document.createElement('li');
+        li.className = 'flex gap-3 items-start opacity-0 transition-opacity';
+        li.innerHTML = `
+          <span class="step-dot mt-0.5 w-5 h-5 rounded-full surface-2 border border-c flex items-center justify-center text-[11px] font-mono shrink-0">${i+1}</span>
+          <div class="text-sm">
+            <div class="font-medium">${s.t}</div>
+            <div class="text-xs text-muted-c mt-0.5 step-detail"></div>
+          </div>`;
+        ol.appendChild(li);
+      });
+
+      // 逐步推进动画
+      const items = ol.children;
+      let i = 0;
+      const tick = () => {
+        if (i >= steps.length) {
+          finishGenerate(intent, guess, d);
+          return;
+        }
+        const li = items[i];
+        li.style.opacity = '1';
+        li.querySelector('.step-dot').style.background = 'var(--ring)';
+        li.querySelector('.step-dot').style.color = '#fff';
+        li.querySelector('.step-dot').textContent = '✓';
+        li.querySelector('.step-detail').innerHTML = steps[i].detail;
+        i++;
+        setTimeout(tick, 700);
+      };
+      setTimeout(tick, 250);
+    }
+
+    // 生成完成后：显示成功态 + "去详情页运行 / 回仪表台"按钮
+    function finishGenerate(intent, guess, d) {
+      const dot = document.querySelector('#parse-steps .flex.items-center.gap-2, #parse-result .animate-pulse');
+      const head = document.querySelector('#parse-result .font-semibold');
+      if (head) head.innerHTML = `<span class="w-2 h-2 rounded-full bg-status-done"></span> 智能体已生成`;
+      const actions = document.getElementById('parse-actions');
+      actions.classList.remove('hidden');
+      actions.innerHTML = `
+        <span class="px-2 py-0.5 rounded text-[11px] font-medium font-mono"
+              style="background:${d.color}22;color:${d.color}">${d.label}</span>
+        <span class="text-xs text-muted-c">配置已保存，可立即运行</span>
+        <div class="flex-1"></div>
+        <button onclick="go('dashboard')" class="text-xs surface-2 border-c border px-3 py-1.5 rounded-lg ring-c cursor-pointer hover:border-primary">返回仪表台</button>
+        <button onclick="go('agent','a1')" class="text-xs bg-primary text-primary-on px-3 py-1.5 rounded-lg ring-c cursor-pointer hover:opacity-90">前往运行 →</button>`;
+      document.getElementById('generate-btn').disabled = false;
+    }
+
+    // 关键词 → 领域推断（mock）
+    function guessDomain(text) {
+      if (/军|防务|武器|演习|冲突|部队/.test(text)) return 'military';
+      if (/股|财报|市场|金融|收益|股价|财报/.test(text)) return 'finance';
+      if (/芯片|半导体|模型|AI|技术|算法|制程/.test(text)) return 'tech';
+      if (/教育|论文|学校|研究|教学|arXiv/.test(text)) return 'education';
+      return 'company';
+    }
+    function domainTools(d) {
+      return { military:2, finance:3, tech:3, education:2, company:3 }[d];
+    }
+
+    // ============================================================
+    //  详情页：mock 数据（智能体详情 + RunRecord + 工具集）
+    // ============================================================
+    const TOOL_SET = {
+      military: [['Web Search','全网搜索'],['RSS','防务媒体订阅']],
+      finance:  [['Web Search','全网搜索'],['Alpha Vantage','行情数据'],['NewsAPI','财经新闻']],
+      tech:     [['Web Search','全网搜索'],['NewsAPI','科技新闻'],['GitHub Trending','开源动态']],
+      education:[['Web Search','全网搜索'],['arXiv API','论文检索']],
+      company:  [['Web Search','全网搜索'],['NewsAPI','公司新闻'],['网页爬取','深度抓取']],
+    };
+    const AGENT_DETAIL = {
+      a1: { name:'亚太防务动态监测', domain:'military', created:'2026-06-28',
+            intent:'追踪近期亚太地区军事部署与防务合作动态',
+            prompt:'作为军事情报分析师，重点关注美日韩三边演习、台海动向…',
+            runs:[ {id:'r1',when:'2026-07-01 22:14',status:'completed',note:'找到 18 条 · 生成报告'},
+                   {id:'r2',when:'2026-06-30 10:02',status:'completed',note:'找到 12 条 · 生成报告'} ] },
+      a2: { name:'半导体行业技术情报', domain:'tech', created:'2026-06-25',
+            intent:'梳理先进制程、Chiplet 与国产替代最新进展',
+            prompt:'作为半导体行业分析师，聚焦 3nm 以下制程、先进封装…',
+            runs:[ {id:'r3',when:'2026-07-02 09:30',status:'completed',note:'找到 24 条 · 生成报告'},
+                   {id:'r4',when:'2026-07-01 15:20',status:'failed',note:'GitHub API 超时 · 节点级失败'},
+                   {id:'r5',when:'2026-06-28 11:05',status:'completed',note:'找到 20 条 · 生成报告'} ] },
+      a3: { name:'特斯拉财务与舆情', domain:'finance', created:'2026-07-02',
+            intent:'分析 Tesla Q2 财报数据与市场情绪',
+            prompt:'作为金融分析师，结合财报数据与市场舆情评估…',
+            runs:[] },
+    };
+
+    // —— 渲染详情页 ——
+    let currentAgentId = 'a1';
+    let runTimer = null;
+    function renderAgent(id) {
+      currentAgentId = id || currentAgentId;
+      const a = AGENT_DETAIL[currentAgentId];
+      if (!a) return;
+      const d = DOMAIN_META[a.domain];
+
+      // 头部
+      document.getElementById('agent-head').innerHTML = `
+        <div class="flex items-start justify-between gap-4">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="px-2 py-0.5 rounded text-[11px] font-medium font-mono"
+                    style="background:${d.color}22;color:${d.color}">${d.label}</span>
+              <button onclick="go('dashboard')" class="text-xs text-muted-c hover:text-primary ring-c">← 仪表台</button>
+            </div>
+            <h1 class="text-xl font-semibold">${a.name}</h1>
+            <p class="text-sm text-muted-c mt-1">${a.intent}</p>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button onclick="go('edit')" class="surface-2 border-c border px-3 py-2 rounded-lg text-sm ring-c cursor-pointer hover:border-primary">✎ 编辑</button>
+          </div>
+        </div>`;
+
+      // 元信息
+      document.getElementById('agent-meta').innerHTML = `
+        <div class="flex justify-between"><dt class="text-muted-c">创建时间</dt><dd class="font-mono">${a.created}</dd></div>
+        <div class="flex justify-between"><dt class="text-muted-c">运行次数</dt><dd class="font-mono">${a.runs.length}</dd></div>
+        <div class="flex justify-between"><dt class="text-muted-c">最近状态</dt><dd>${a.runs.length?STATUS_META[a.runs[0].status].text:'空闲'}</dd></div>`;
+
+      // 工具集
+      document.getElementById('agent-tools').innerHTML = TOOL_SET[a.domain].map(([n,desc])=>`
+        <div class="flex items-center gap-2 text-sm">
+          <span class="w-1.5 h-1.5 rounded-full bg-status-done"></span>
+          <span class="font-medium">${n}</span>
+          <span class="text-xs text-muted-c">${desc}</span>
+        </div>`).join('');
+
+      // 历史运行
+      const rw = document.getElementById('agent-runs');
+      if (!a.runs.length) {
+        rw.innerHTML = `<div class="p-8 text-center text-sm text-muted-c">暂无运行记录，点上方「运行」开始第一次执行</div>`;
+      } else {
+        rw.innerHTML = a.runs.map(r=>{
+          const s = STATUS_META[r.status];
+          return `
+          <div onclick="go('report','${r.id}')" class="p-4 flex items-center gap-3 cursor-pointer hover:bg-[var(--surface-2)] transition-colors">
+            <span class="w-2 h-2 rounded-full shrink-0" style="background:${s.dot}"></span>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-mono">${r.when}</div>
+              <div class="text-xs text-muted-c mt-0.5">${r.note}</div>
+            </div>
+            <span class="text-xs text-muted-c">${s.text}</span>
+            <span class="text-muted-c">›</span>
+          </div>`;
+        }).join('');
+      }
+
+      // 重置运行区
+      resetRunArea();
+    }
+
+    function resetRunArea() {
+      clearTimeout(runTimer);
+      document.getElementById('run-empty').classList.remove('hidden');
+      document.getElementById('sse-stream').classList.add('hidden');
+      document.getElementById('run-btn').disabled = false;
+      document.getElementById('run-btn').innerHTML = '▶ 运行';
+    }
+
+    // —— 核心：模拟 SSE 实时步骤流 ——
+    // 对应设计文档的 SSE 消息：step_start / step_result / step_complete / report_ready
+    const WORKFLOW = [
+      { node:'search',  label:'搜集',  steps:[
+          { type:'start',  msg:'开始搜索全网与数据源…' },
+          { type:'result', msg:'Web Search 找到 12 条相关结果' },
+          { type:'result', msg:'领域 API 返回 6 篇资料' },
+          { type:'complete', msg:'共获取 18 条原始资料' } ]},
+      { node:'analyze', label:'分析',  steps:[
+          { type:'start',  msg:'正在用 LLM 提炼关键情报…' },
+          { type:'result', msg:'识别出 5 个关键实体与 3 条趋势' },
+          { type:'complete', msg:'情报提炼完成' } ]},
+      { node:'report',  label:'结论',  steps:[
+          { type:'start',  msg:'正在生成结构化 Markdown 报告…' },
+          { type:'complete', msg:'报告已生成', final:true } ]},
+    ];
+    const STEP_ICON = { pending:'○', running:'◌', done:'✓', failed:'✕' };
+
+    function runAgent() {
+      document.getElementById('run-empty').classList.add('hidden');
+      const stream = document.getElementById('sse-stream');
+      stream.classList.remove('hidden');
+      document.getElementById('run-status-dot').className = 'w-2 h-2 rounded-full bg-status-running animate-pulse';
+      document.getElementById('run-status-text').textContent = '运行中…';
+
+      // 渲染 3 个节点骨架
+      const ol = document.getElementById('sse-steps');
+      ol.innerHTML = WORKFLOW.map((nd,i)=>`
+        <li data-node="${nd.node}" class="surface-2 rounded-lg p-3">
+          <div class="flex items-center gap-2">
+            <span class="node-icon w-5 h-5 rounded-full surface border border-c flex items-center justify-center text-[11px] font-mono shrink-0">${STEP_ICON.pending}</span>
+            <span class="node-label text-sm font-medium">${i+1}. ${nd.label}</span>
+            <span class="node-tag ml-auto text-[11px] text-muted-c font-mono">${nd.node}</span>
+          </div>
+          <div class="node-detail mt-2 ml-7 space-y-1 text-xs text-muted-c"></div>
+        </li>`).join('');
+
+      document.getElementById('run-btn').disabled = true;
+      document.getElementById('run-btn').innerHTML = '◌ 运行中…';
+
+      // 逐节点、逐步骤推送
+      const nodes = ol.children;
+      let ni = 0, si = 0;
+      const push = () => {
+        if (ni >= WORKFLOW.length) { finishRun(true); return; }
+        const nd = WORKFLOW[ni];
+        const li = nodes[ni];
+        const icon = li.querySelector('.node-icon');
+        const detail = li.querySelector('.node-detail');
+        // 首次进入节点：标记 running
+        if (si === 0) {
+          icon.textContent = STEP_ICON.running;
+          icon.style.color = 'var(--text)';
+          icon.style.borderColor = 'var(--ring)';
+        }
+        const ev = nd.steps[si];
+        const row = document.createElement('div');
+        row.style.opacity = '0';
+        row.style.transition = 'opacity .3s';
+        const mark = ev.type==='complete' ? '✓' : ev.type==='start' ? '→' : '·';
+        row.innerHTML = `<span class="font-mono text-muted-c/70">[${ev.type}]</span> ${ev.msg}`;
+        detail.appendChild(row);
+        requestAnimationFrame(()=>row.style.opacity='1');
+        si++;
+        if (si >= nd.steps.length) {
+          // 节点完成
+          icon.textContent = STEP_ICON.done;
+          icon.style.background = 'var(--ring)';
+          icon.style.color = '#fff';
+          ni++; si = 0;
+          runTimer = setTimeout(push, 600);
+          return;
+        }
+        runTimer = setTimeout(push, 850);
+      };
+      runTimer = setTimeout(push, 400);
+    }
+
+    function finishRun(ok) {
+      const dot = document.getElementById('run-status-dot');
+      const txt = document.getElementById('run-status-text');
+      if (ok) {
+        dot.className = 'w-2 h-2 rounded-full bg-status-done';
+        txt.innerHTML = `报告已生成 · <a onclick="go('report','r1')" class="text-primary cursor-pointer hover:underline ring-c">查看报告 →</a>`;
+      }
+      const btn = document.getElementById('run-btn');
+      btn.disabled = false;
+      btn.innerHTML = '▶ 再次运行';
+    }
+
+    // ============================================================
+    //  编辑页
+    // ============================================================
+    let editToolsState = {};
+    function renderEdit(id) {
+      currentAgentId = id || currentAgentId;
+      const a = AGENT_DETAIL[currentAgentId];
+      if (!a) return;
+
+      document.getElementById('edit-name').value = a.name;
+      document.getElementById('edit-prompt').value = a.prompt;
+
+      // 工具开关：领域全工具集，默认全开
+      editToolsState = {};
+      TOOL_SET[a.domain].forEach(([n,desc])=> editToolsState[n] = true);
+      const wrap = document.getElementById('edit-tools');
+      wrap.innerHTML = Object.entries(editToolsState).map(([n])=>{
+        const desc = TOOL_SET[a.domain].find(([x])=>x===n)[1];
+        return `
+        <div class="flex items-center justify-between p-3.5">
+          <div class="min-w-0">
+            <div class="text-sm font-medium">${n}</div>
+            <div class="text-xs text-muted-c mt-0.5">${desc}</div>
+          </div>
+          <button data-tool="${n}"
+            class="toggle relative w-10 h-6 rounded-full transition-colors shrink-0 ring-c cursor-pointer"
+            aria-pressed="true">
+            <span class="toggle-dot absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform"></span>
+          </button>
+        </div>`;
+      }).join('');
+
+      wrap.querySelectorAll('.toggle').forEach(t=>{
+        applyToggle(t, true);
+        t.onclick = () => {
+          const on = t.getAttribute('aria-pressed') !== 'true';
+          editToolsState[t.dataset.tool] = on;
+          applyToggle(t, on);
+        };
+      });
+
+      document.getElementById('edit-saved').classList.add('hidden');
+    }
+    function applyToggle(btn, on) {
+      btn.setAttribute('aria-pressed', on);
+      btn.style.background = on ? 'var(--ring)' : 'var(--text-muted)';
+      btn.querySelector('.toggle-dot').style.transform = on ? 'translateX(16px)' : 'translateX(0)';
+    }
+    function saveEdit() {
+      const a = AGENT_DETAIL[currentAgentId];
+      if (a) {
+        a.name = document.getElementById('edit-name').value || a.name;
+        a.prompt = document.getElementById('edit-prompt').value;
+      }
+      const ok = document.getElementById('edit-saved');
+      ok.classList.remove('hidden');
+      setTimeout(()=>ok.classList.add('hidden'), 2000);
+    }
+
+    // ============================================================
+    //  报告页：mock 报告 + 简易 Markdown 渲染 + 下载
+    // ============================================================
+    const REPORTS = {
+      r1: { title:'亚太防务动态监测 · 情报简报', agent:'亚太防务动态监测',
+            when:'2026-07-01 22:14', sources:18,
+        md:`# 亚太防务动态情报简报
+
+> **生成时间**：2026-07-01 22:14 ｜ **数据源**：18 条 ｜ **领域**：军事
+
+## 摘要
+
+近一周亚太地区防务活动显著升温，**美日韩三边合作**进入实质性演练阶段，台海方向保持高强度巡逻态势。本简报综合公开报道与防务媒体 RSS，提炼关键动态与趋势研判。
+
+## 关键动态
+
+### 1. 美日韩三边联合演习
+- 代号「自由之刃」演习于 6 月 28 日启动
+- 涵盖反导、反潜与海上拦截课目
+- 三国共投入舰艇 12 艘、军机 40 余架
+
+### 2. 台海巡逻强度
+解放军海空兵力在台岛周边保持**日均 15 架次**近距活动，较上月增长 12%。
+
+## 趋势研判
+
+| 维度 | 判断 | 置信度 |
+|------|------|--------|
+| 三边机制 | 制度化加速 | 高 |
+| 区域误判风险 | 中等偏高 | 中 |
+| 军备竞赛节奏 | 持续升温 | 高 |
+
+## 结论
+
+短期内亚太防务合作将延续收紧态势，建议持续跟踪 7 月预定的新一轮磋商节点。` },
+      default: { title:'情报分析报告', agent:'（示例智能体）', when:'2026-07-02', sources:0,
+        md:`# 情报分析报告
+
+> 这是原型示例报告。真实运行后，结论节点将生成结构化 Markdown 全文。
+
+## 摘要
+
+报告内容将包含：**关键动态、趋势研判、数据表格与结论建议**。
+
+## 关键发现
+
+- 发现 1
+- 发现 2
+- 发现 3
+
+## 结论
+
+（由分析节点与结论节点协同产出）` },
+    };
+
+    // 极简 Markdown → HTML（仅支持原型所需子集：h1/h2/h3/列表/表格/引用/粗体/段落）
+    function mdToHtml(md) {
+      const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+      const lines = md.split('\n');
+      let html = '', inList = false, inTable = false, tableBuf = [];
+      const closeList = ()=>{ if(inList){html+='</ul>'; inList=false;} };
+      const flushTable = ()=>{
+        if(!tableBuf.length) return;
+        const [head,...rest] = tableBuf;
+        const ths = head.split('|').map(x=>x.trim()).filter(Boolean);
+        html += '<table><thead><tr>'+ths.map(c=>`<th>${inline(c)}</th>`).join('')+'</tr></thead><tbody>';
+        rest.forEach(r=>{
+          const tds = r.split('|').map(x=>x.trim()).filter(Boolean);
+          html += '<tr>'+tds.map(c=>`<td>${inline(c)}</td>`).join('')+'</tr>';
+        });
+        html += '</tbody></table>'; tableBuf = [];
+      };
+      lines.forEach(raw=>{
+        const line = raw.replace(/\s+$/,'');
+        if(line.startsWith('|')) { closeList(); inTable=true; tableBuf.push(line); return; }
+        else if(inTable){ flushTable(); inTable=false; }
+        if(line.startsWith('### ')) { closeList(); html += `<h3>${inline(line.slice(4))}</h3>`; }
+        else if(line.startsWith('## ')) { closeList(); html += `<h2>${inline(line.slice(3))}</h2>`; }
+        else if(line.startsWith('# '))  { closeList(); html += `<h1>${inline(line.slice(2))}</h1>`; }
+        else if(line.startsWith('> '))  { closeList(); html += `<blockquote>${inline(line.slice(2))}</blockquote>`; }
+        else if(line.startsWith('- '))  { if(!inList){html+='<ul>';inList=true;} html += `<li>${inline(line.slice(2))}</li>`; }
+        else if(line.trim()==='')       { closeList(); }
+        else { closeList(); html += `<p>${inline(line)}</p>`; }
+      });
+      closeList(); if(inTable) flushTable();
+      return html;
+    }
+
+    function renderReport(id) {
+      const r = REPORTS[id] || REPORTS.default;
+      document.getElementById('report-title').textContent = r.title;
+      document.getElementById('report-meta').innerHTML =
+        `${r.agent} · ${r.when} · <span class="font-mono">${r.sources} 条数据源</span>`;
+      document.getElementById('report-bread').textContent = r.title.slice(0,16) + '…';
+      document.getElementById('report-body').innerHTML = mdToHtml(r.md);
+      currentReportMd = r.md;
+      currentReportName = r.title.split(' · ')[0] + '.md';
+    }
+
+    let currentReportMd = '', currentReportName = 'report.md';
+    function downloadReport() {
+      const blob = new Blob([currentReportMd], {type:'text/markdown'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = currentReportName;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    // ============================================================
+    //  设置页：LLM 选择 + API Key + 降级提示
+    // ============================================================
+    let settings = { llm:'deepseek', keys:{tavily:'',alpha_vantage:'',newsapi:''} };
+    // 领域 → 依赖的 key（用于计算降级）
+    const DOMAIN_DEPS = {
+      military: ['tavily'],
+      finance:  ['tavily','alpha_vantage','newsapi'],
+      tech:     ['tavily','newsapi'],
+      education:['tavily'],
+      company:  ['tavily','newsapi'],
+    };
+    function renderSettings() {
+      // LLM 卡片选择
+      const cards = document.querySelectorAll('.llm-card');
+      cards.forEach(c=>{
+        const on = c.dataset.llm === settings.llm;
+        c.style.borderColor = on ? 'var(--ring)' : '';
+        c.style.background  = on ? 'var(--ring)' + '14' : '';
+        c.onclick = ()=>{ settings.llm = c.dataset.llm; renderSettings(); };
+      });
+      document.getElementById('llm-key').placeholder =
+        settings.llm === 'glm' ? 'glm-xxxx...' : 'sk-...';
+
+      // key 输入回填 + 监听
+      document.querySelectorAll('.api-input').forEach(inp=>{
+        if (inp.value === '') inp.value = settings.keys[inp.dataset.key] || '';
+        inp.oninput = ()=>{ settings.keys[inp.dataset.key] = inp.value; updateDegrade(); };
+      });
+
+      updateDegrade();
+      document.getElementById('settings-saved').classList.add('hidden');
+    }
+    function updateDegrade() {
+      const missing = Object.keys(settings.keys).filter(k=> !settings.keys[k]);
+      const box = document.getElementById('degrade-notice');
+      if (!missing.length) {
+        box.style.borderColor = '#22C55E55'; box.style.background = '#22C55E12';
+        box.innerHTML = `<div class="text-sm font-medium" style="color:#22C55E">✓ 全部数据源已配置</div>
+          <div class="text-xs text-muted-c mt-1">所有领域将以完整工具集运行</div>`;
+      } else {
+        // 哪些领域受影响
+        const affected = Object.entries(DOMAIN_DEPS).filter(([_,deps])=>
+          deps.some(d=>missing.includes(d))).map(([d])=>DOMAIN_META[d].label);
+        box.style.borderColor = '#D9770655'; box.style.background = '#D9770612';
+        box.innerHTML = `<div class="text-sm font-medium" style="color:#D97706">⚠ ${missing.length} 项未配置</div>
+          <div class="text-xs text-muted-c mt-1">缺失：${missing.join('、')} · 受影响领域「${affected.join('、')}」将降级为纯搜索模式</div>`;
+      }
+    }
+    function saveSettings() {
+      const ok = document.getElementById('settings-saved');
+      ok.classList.remove('hidden');
+      setTimeout(()=>ok.classList.add('hidden'), 2000);
+    }
+
+    // ============================================================
+    //  路由：页面切换（原型用 hash/JS 切，非真实 URL）
+    // ============================================================
+    function go(route, id) {
+      console.log('[route]', route, id);
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const page = document.getElementById('page-' + (route === 'agent' ? 'agent' : route));
+      if (page) page.classList.add('active');
+      // 高亮导航
+      document.querySelectorAll('.nav-item').forEach(n =>
+        n.classList.toggle('bg-primary/10', n.dataset.route === route));
+      if (route === 'dashboard') renderDashboard();
+      if (route === 'new') renderNew();
+      if (route === 'agent') renderAgent(id);
+      if (route === 'edit') renderEdit(id);
+      if (route === 'report') renderReport(id);
+      if (route === 'settings') renderSettings();
+      window.scrollTo(0,0);
+    }
+
+    // ============================================================
+    //  主题切换
+    // ============================================================
+    function applyTheme(dark) {
+      document.documentElement.classList.toggle('dark', dark);
+      document.getElementById('theme-icon').textContent = dark ? '☀' : '☾';
+      document.getElementById('theme-label').textContent = dark ? '亮色' : '暗色';
+      localStorage.setItem('iag-theme', dark ? 'dark' : 'light');
+    }
+
+    // —— 初始化 ——
+    document.addEventListener('DOMContentLoaded', () => {
+      // 主题
+      const savedDark = localStorage.getItem('iag-theme') !== 'light';
+      applyTheme(savedDark);
+      document.getElementById('theme-toggle').onclick = () =>
+        applyTheme(!document.documentElement.classList.contains('dark'));
+      // 导航与跳转按钮
+      document.querySelectorAll('[data-route]').forEach(el =>
+        el.onclick = () => go(el.dataset.route));
+      // 生成页按钮
+      document.getElementById('generate-btn').onclick = runGenerate;
+      // 详情页运行按钮
+      document.getElementById('run-btn').onclick = runAgent;
+      // 编辑页保存按钮
+      document.getElementById('edit-save').onclick = saveEdit;
+      // 报告页下载按钮
+      document.getElementById('report-download').onclick = downloadReport;
+      // 设置页保存按钮
+      document.getElementById('settings-save').onclick = saveSettings;
+      // 首屏
+      renderDashboard();
+      document.querySelector('.nav-item[data-route="dashboard"]').classList.add('bg-primary/10');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# 后端运行产物与敏感配置
+backend/data/
+backend/.env
+.env
+.env.*
+!.env.example
+
+# 前端
+node_modules/
+.next/
+out/
+frontend/.env.local
+
+# 系统/编辑器
+.DS_Store
+*.swp
+.idea/
+.vscode/
+*.log

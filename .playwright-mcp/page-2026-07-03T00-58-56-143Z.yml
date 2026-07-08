@@ -1,0 +1,80 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: 情
+      - generic [ref=e6]:
+        - generic [ref=e7]: 情报智能体
+        - generic [ref=e8]: Generator
+    - navigation [ref=e9]:
+      - link "▦ 仪表台" [ref=e10] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e11]: ▦
+        - text: 仪表台
+      - link "＋ 新建智能体" [ref=e12] [cursor=pointer]:
+        - /url: /agents/new
+        - generic [ref=e13]: ＋
+        - text: 新建智能体
+      - link "▤ 报告" [ref=e14] [cursor=pointer]:
+        - /url: /reports
+        - generic [ref=e15]: ▤
+        - text: 报告
+      - link "⚙ 设置" [ref=e16] [cursor=pointer]:
+        - /url: /settings
+        - generic [ref=e17]: ⚙
+        - text: 设置
+    - button "☀ 亮色" [ref=e19] [cursor=pointer]
+  - main [ref=e20]:
+    - generic [ref=e21]:
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - link "← 智能体详情" [ref=e24] [cursor=pointer]:
+            - /url: /agents/agt_4ec14f71e836
+          - generic [ref=e25]: /
+          - generic [ref=e26]: 报告
+        - generic [ref=e27]:
+          - generic [ref=e28]:
+            - heading "情报分析报告" [level=1] [ref=e29]
+            - paragraph [ref=e30]: 2026-07-02 21:33 · 字 · 步
+          - link "↓ 下载 .md" [ref=e31] [cursor=pointer]:
+            - /url: http://192.168.184.128:8001/api/reports/run_f400872e063d/download
+      - article [ref=e33]:
+        - generic [ref=e34]:
+          - heading "亚太军事部署及美日韩演习动态研判报告" [level=1] [ref=e35]
+          - paragraph [ref=e36]:
+            - strong [ref=e37]: 摘要
+            - text: ：针对亚太军事部署及美日韩三边演习的情报需求，当前开源信息池存在严重偏移，核心目标情报缺失。现有碎片信息仅反映中国陆军后勤无人化转型及战争形态代差化认知，无法直接评估美日韩同盟动态。亟需重构情报采集链路以填补关键盲区。
+          - heading "关键动态" [level=3] [ref=e38]
+          - list [ref=e39]:
+            - listitem [ref=e40]:
+              - strong [ref=e41]: 战术保障无人化落地
+              - text: ：中国陆军某旅于赣南腹地实战化演练中，成功应用无人机穿越密林投送前线受损装备配件，验证了复杂地形下“无人机+装备维修”的野战抢修新模式。
+            - listitem [ref=e42]:
+              - strong [ref=e43]: 战争理论迭代更新
+              - text: ：中国军方强调“信息化智能化战争条件下”把握作战主动权，提出通过新旧“代差”实现战争胜势上的“维差”，突出技术迭代与作战样式创新的制胜作用。
+          - heading "趋势研判" [level=3] [ref=e44]
+          - list [ref=e45]:
+            - listitem [ref=e46]:
+              - strong [ref=e47]: 后勤保障向立体无人化演进
+              - text: ：无人机应用正从传统的侦察打击，向精准物资投送、伤员前运等战场后勤深度渗透。此趋势将显著提升高威胁环境下的野战生存与装备再生能力。
+            - listitem [ref=e48]:
+              - strong [ref=e49]: 以“代差”谋求不对称优势
+              - text: ：对“新能制旧”的强调，反映出面对潜在对手的传统兵力或装备规模压力，区域力量正加速通过AI、无人系统等技术迭代制造不对称优势，以抵消敌方战力。
+          - heading "结论建议" [level=3] [ref=e50]
+          - list [ref=e51]:
+            - listitem [ref=e52]:
+              - strong [ref=e53]: 核心情报缺口
+              - text: ：当前资料
+              - strong [ref=e54]: 完全缺失
+              - text: 美日韩三边演习的兵力编成、课目设置及演练区域信息；
+              - strong [ref=e55]: 缺乏
+              - text: 美军在第一岛链及关岛等前沿基地的最新部署调整数据。此盲区导致无法评估亚太地缘安全即时冲击。
+            - listitem [ref=e56]:
+              - strong [ref=e57]: 潜在风险推演
+              - text: ：中国军方推进无人化实战及代差胜势，客观上是对地区军力平衡变动的回应。若美日韩三边同盟实质化推进（情报共享、体系融合），将迫使区域力量加速智能化列装，易引发战术摩擦误判及军备竞赛升级。
+            - listitem [ref=e58]:
+              - strong [ref=e59]: 行动建议
+              - text: ：亟需补充定向采集源，重点追踪：①美日韩防务高层会晤及联合声明（涉指挥体系互通）；②西太海域美舰机动态及日韩基地异动；③三边联合演训特定课目（如反导反潜、两栖登陆）的实战化程度。
+          - paragraph [ref=e60]:
+            - strong [ref=e61]: 数据来源
+            - text: ：人民网军事频道（作战理论及陆军演练公开报道）、解放军报（军地协作报道）。
+            - emphasis [ref=e62]: 注：原始检索命中8条无关影视信息，有效军事情报覆盖率极低。

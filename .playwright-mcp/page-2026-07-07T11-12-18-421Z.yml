@@ -1,0 +1,62 @@
+- generic [active] [ref=f9e1]:
+  - banner [ref=f9e2]:
+    - button "Skip to content" [ref=f9e4] [cursor=pointer]:
+      - generic [ref=f9e6]: Skip to content
+    - button "Accessibility Feedback" [ref=f9e7] [cursor=pointer]:
+      - generic [ref=f9e9]: Accessibility Feedback
+    - generic [ref=f9e10]:
+      - link "Back to Bing search" [ref=f9e11] [cursor=pointer]:
+        - /url: /?FORM=Z9FD1
+        - heading "Back to Bing search" [level=1] [ref=f9e12]
+      - search [ref=f9e13]:
+        - button "Search" [ref=f9e16] [cursor=pointer]
+        - searchbox "Enter your search here - Search suggestions will show as you type" [ref=f9e17]: 西安理工大学大学分数线
+    - complementary "Account Rewards and Preferences" [ref=f9e18]:
+      - button "Microsoft Rewards" [ref=f9e19] [cursor=pointer]
+      - link "Sign in" [ref=f9e20] [cursor=pointer]:
+        - /url: javascript:void(0)
+        - generic "Sign in" [ref=f9e21]
+    - generic:
+      - generic "国内版" [ref=f9e22]
+      - generic "国际版" [ref=f9e23] [cursor=pointer]
+    - navigation "Search Filter" [ref=f9e24]:
+      - list [ref=f9e25]:
+        - listitem [ref=f9e26]:
+          - link "Web" [ref=f9e27] [cursor=pointer]:
+            - /url: /?scope=web&FORM=HDRSC1
+        - listitem [ref=f9e28]:
+          - link "Images" [ref=f9e29] [cursor=pointer]:
+            - /url: /images/search?q=%e8%a5%bf%e5%ae%89%e7%90%86%e5%b7%a5%e5%a4%a7%e5%ad%a6%e5%a4%a7%e5%ad%a6%e5%88%86%e6%95%b0%e7%ba%bf&FORM=HDRSC2
+        - listitem [ref=f9e30]:
+          - link "Videos" [ref=f9e31] [cursor=pointer]:
+            - /url: /videos/search?q=%e8%a5%bf%e5%ae%89%e7%90%86%e5%b7%a5%e5%a4%a7%e5%ad%a6%e5%a4%a7%e5%ad%a6%e5%88%86%e6%95%b0%e7%ba%bf&FORM=HDRSC3
+        - listitem [ref=f9e32]:
+          - link "Academic" [ref=f9e33] [cursor=pointer]:
+            - /url: /academic/search?q=%e8%a5%bf%e5%ae%89%e7%90%86%e5%b7%a5%e5%a4%a7%e5%ad%a6%e5%a4%a7%e5%ad%a6%e5%88%86%e6%95%b0%e7%ba%bf&FORM=HDRSC4
+        - listitem [ref=f9e34]:
+          - link "Dict" [ref=f9e35] [cursor=pointer]:
+            - /url: /dict/search?q=%e8%a5%bf%e5%ae%89%e7%90%86%e5%b7%a5%e5%a4%a7%e5%ad%a6%e5%a4%a7%e5%ad%a6%e5%88%86%e6%95%b0%e7%ba%bf&FORM=HDRSC6
+        - listitem [ref=f9e36]:
+          - link "Maps" [ref=f9e37] [cursor=pointer]:
+            - /url: /maps?q=%e8%a5%bf%e5%ae%89%e7%90%86%e5%b7%a5%e5%a4%a7%e5%ad%a6%e5%a4%a7%e5%ad%a6%e5%88%86%e6%95%b0%e7%ba%bf&FORM=HDRSC7
+        - listitem [ref=f9e38]:
+          - button "More" [ref=f9e39] [cursor=pointer]:
+            - img [ref=f9e41]
+            - text: More
+  - contentinfo [ref=f9e43]:
+    - list [ref=f9e45]:
+      - listitem [ref=f9e46]:
+        - link "增值电信业务经营许可证：合字B2-20090007" [ref=f9e47] [cursor=pointer]:
+          - /url: https://dxzhgl.miit.gov.cn/dxxzsp/xkz/xkzgl/resource/qiyereport.jsp?num=caf04fa4-bd8a-4d9e-80b6-2aa1b86c1509&type=yreport
+      - listitem [ref=f9e48]:
+        - link "京ICP备10036305号-7" [ref=f9e49] [cursor=pointer]:
+          - /url: https://beian.miit.gov.cn
+      - listitem [ref=f9e50]:
+        - link "京公网安备11010802047360号" [ref=f9e51] [cursor=pointer]:
+          - /url: https://beian.mps.gov.cn/#/query/webSearch?code=11010802047360
+      - listitem [ref=f9e52]:
+        - link "Privacy" [ref=f9e53] [cursor=pointer]:
+          - /url: http://go.microsoft.com/fwlink/?LinkId=521839
+      - listitem [ref=f9e54]:
+        - link "Terms" [ref=f9e55] [cursor=pointer]:
+          - /url: http://go.microsoft.com/fwlink/?LinkID=246338

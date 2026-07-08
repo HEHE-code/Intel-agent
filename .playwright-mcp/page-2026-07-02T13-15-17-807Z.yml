@@ -1,0 +1,84 @@
+- generic [active] [ref=f44e1]:
+  - generic [ref=f44e2]:
+    - complementary [ref=f44e3]:
+      - generic [ref=f44e4]:
+        - generic [ref=f44e5]: 情
+        - generic [ref=f44e6]:
+          - generic [ref=f44e7]: 情报智能体
+          - generic [ref=f44e8]: Generator
+      - navigation [ref=f44e9]:
+        - link "▦ 仪表台" [ref=f44e10] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f44e11]: ▦
+          - text: 仪表台
+        - link "＋ 新建智能体" [ref=f44e12] [cursor=pointer]:
+          - /url: /agents/new
+          - generic [ref=f44e13]: ＋
+          - text: 新建智能体
+        - link "▤ 报告" [ref=f44e14] [cursor=pointer]:
+          - /url: /reports
+          - generic [ref=f44e15]: ▤
+          - text: 报告
+        - link "⚙ 设置" [ref=f44e16] [cursor=pointer]:
+          - /url: /settings
+          - generic [ref=f44e17]: ⚙
+          - text: 设置
+      - button "☾ 暗色" [ref=f44e31] [cursor=pointer]
+    - main [ref=f44e20]:
+      - generic [ref=f44e21]:
+        - generic [ref=f44e33]:
+          - generic [ref=f44e34]:
+            - generic [ref=f44e35]:
+              - generic [ref=f44e36]: 军事
+              - link "← 仪表台" [ref=f44e37] [cursor=pointer]:
+                - /url: /
+            - heading "亚太防务动态监测(自定义)" [level=1] [ref=f44e38]
+            - paragraph [ref=f44e39]: 追踪近期亚太地区军事部署与美日韩三边演习动态
+          - link "✎ 编辑" [ref=f44e40] [cursor=pointer]:
+            - /url: /agents/agt_4ec14f71e836/edit
+        - generic [ref=f44e41]:
+          - generic [ref=f44e42]:
+            - generic [ref=f44e43]:
+              - generic [ref=f44e44]:
+                - generic [ref=f44e45]: 工作流执行
+                - generic [ref=f44e46]: 搜集 → 分析 → 结论，LangGraph 实时推送
+              - button "▶ 运行" [ref=f44e47]
+            - generic [ref=f44e48]: 点击「运行」开始执行，工作流步骤将在此实时显示
+          - generic [ref=f44e49]:
+            - generic [ref=f44e50]:
+              - generic [ref=f44e51]: 智能体信息
+              - generic [ref=f44e52]:
+                - generic [ref=f44e53]:
+                  - term [ref=f44e54]: 创建时间
+                  - definition [ref=f44e55]: 2026-07-02
+                - generic [ref=f44e56]:
+                  - term [ref=f44e57]: 运行次数
+                  - definition [ref=f44e58]: "2"
+                - generic [ref=f44e59]:
+                  - term [ref=f44e60]: 最近状态
+                  - definition [ref=f44e61]: 已完成
+            - generic [ref=f44e62]:
+              - generic [ref=f44e63]: 已挂载工具集
+              - generic [ref=f44e64]:
+                - generic [ref=f44e67]: rss_military
+                - generic [ref=f44e70]: web_search
+        - generic [ref=f44e71]:
+          - heading "历史运行" [level=2] [ref=f44e72]
+          - generic [ref=f44e73]:
+            - link "2026-07-02 17:32 3 步 · 809 字 已完成 ›" [ref=f44e74] [cursor=pointer]:
+              - /url: /reports/run_85976ca4d183
+              - generic [ref=f44e76]:
+                - generic [ref=f44e77]: 2026-07-02 17:32
+                - generic [ref=f44e78]: 3 步 · 809 字
+              - generic [ref=f44e79]: 已完成
+              - generic [ref=f44e80]: ›
+            - link "2026-07-02 17:09 0 步 · 0 字 运行中 ›" [ref=f44e81] [cursor=pointer]:
+              - /url: /reports/run_243973a9ca90
+              - generic [ref=f44e83]:
+                - generic [ref=f44e84]: 2026-07-02 17:09
+                - generic [ref=f44e85]: 0 步 · 0 字
+              - generic [ref=f44e86]: 运行中
+              - generic [ref=f44e87]: ›
+  - button "Open Next.js Dev Tools" [ref=f44e27] [cursor=pointer]:
+    - img [ref=f44e28]
+  - alert [ref=f44e88]

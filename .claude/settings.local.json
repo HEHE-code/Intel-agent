@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(planning-with-files:planning-with-files)",
+      "Skill(planning-with-files:planning-with-files:*)",
+      "Bash(python3 ~/.claude/skills/ui-ux-pro-max/scripts/search.py \"intelligence research analytics dashboard professional data-dense dark-mode analyst\" --design-system --persist -p \"Intelligence Agent Generator\" -f markdown)"
+    ]
+  }
+}

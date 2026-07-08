@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+/* —— 双主题语义 token（照原型设计系统）—— */
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-2: #f1f5f9;
+  --border: #dbeafe;
+  --text: #1e3a8a;
+  --text-muted: #64748b;
+  --ring: #1e40af;
+}
+.dark {
+  --bg: #0b1220;
+  --surface: #131c2e;
+  --surface-2: #1b2640;
+  --border: #243150;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --ring: #3b82f6;
+}
+
+/* 把语义变量映射成 Tailwind v4 可用的颜色 token */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-borderc: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --color-ring: var(--ring);
+  --color-primary: #1e40af;
+  --color-on-primary: #ffffff;
+  --color-accent: #d97706;
+  --color-on-accent: #ffffff;
+  --color-running: #3b82f6;
+  --color-done: #22c55e;
+  --color-failed: #ef4444;
+  --color-idle: #64748b;
+  --font-sans: "Fira Sans", system-ui, sans-serif;
+  --font-mono: "Fira Code", ui-monospace, monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  transition: background 0.2s, color 0.2s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
+
+/* 报告页 Markdown 排版（照原型设计系统） */
+.prose-report h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+}
+.prose-report h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 1.6rem 0 0.6rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--border);
+}
+.prose-report h3 {
+  font-size: 1.02rem;
+  font-weight: 600;
+  margin: 1.2rem 0 0.4rem;
+}
+.prose-report p {
+  margin: 0.5rem 0;
+  line-height: 1.7;
+}
+.prose-report ul {
+  margin: 0.5rem 0;
+  padding-left: 1.2rem;
+  list-style: disc;
+}
+.prose-report li {
+  margin: 0.3rem 0;
+  line-height: 1.6;
+}
+.prose-report strong {
+  font-weight: 600;
+}
+.prose-report blockquote {
+  border-left: 3px solid var(--ring);
+  padding: 0.5rem 0.9rem;
+  margin: 0.6rem 0;
+  background: var(--surface-2);
+  border-radius: 0 0.4rem 0.4rem 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.prose-report table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.8rem 0;
+  font-size: 0.85rem;
+}
+.prose-report th,
+.prose-report td {
+  border: 1px solid var(--border);
+  padding: 0.45rem 0.7rem;
+  text-align: left;
+}
+.prose-report th {
+  background: var(--surface-2);
+  font-weight: 600;
+}
+.prose-report code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--surface-2);
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.2rem;
+}

@@ -1,0 +1,89 @@
+- generic [active] [ref=f7e1]:
+  - generic [ref=f7e2]:
+    - complementary [ref=f7e3]:
+      - generic [ref=f7e4]:
+        - generic [ref=f7e5]: 情
+        - generic [ref=f7e6]:
+          - generic [ref=f7e7]: 情报智能体
+          - generic [ref=f7e8]: Generator
+      - navigation [ref=f7e9]:
+        - link "▦ 仪表台" [ref=f7e10] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f7e11]: ▦
+          - text: 仪表台
+        - link "＋ 新建智能体" [ref=f7e12] [cursor=pointer]:
+          - /url: /agents/new
+          - generic [ref=f7e13]: ＋
+          - text: 新建智能体
+        - link "▤ 报告" [ref=f7e14] [cursor=pointer]:
+          - /url: /reports
+          - generic [ref=f7e15]: ▤
+          - text: 报告
+        - link "⚙ 设置" [ref=f7e16] [cursor=pointer]:
+          - /url: /settings
+          - generic [ref=f7e17]: ⚙
+          - text: 设置
+      - button "☀ 亮色" [ref=f7e19] [cursor=pointer]
+    - main [ref=f7e20]:
+      - generic [ref=f7e21]:
+        - generic [ref=f7e23]:
+          - generic [ref=f7e24]:
+            - generic [ref=f7e25]:
+              - generic [ref=f7e26]: 军事
+              - link "← 仪表台" [ref=f7e27] [cursor=pointer]:
+                - /url: /
+            - heading "亚太防务动态监测(自定义)" [level=1] [ref=f7e28]
+            - paragraph [ref=f7e29]: 追踪近期亚太地区军事部署与美日韩三边演习动态
+          - link "✎ 编辑" [ref=f7e30] [cursor=pointer]:
+            - /url: /agents/agt_4ec14f71e836/edit
+        - generic [ref=f7e31]:
+          - generic [ref=f7e32]:
+            - generic [ref=f7e33]:
+              - generic [ref=f7e34]:
+                - generic [ref=f7e35]: 工作流执行
+                - generic [ref=f7e36]: 搜集 → 分析 → 结论，LangGraph 实时推送
+              - button "▶ 运行" [ref=f7e37]
+            - generic [ref=f7e38]: 点击「运行」开始执行，工作流步骤将在此实时显示
+          - generic [ref=f7e39]:
+            - generic [ref=f7e40]:
+              - generic [ref=f7e41]: 智能体信息
+              - generic [ref=f7e42]:
+                - generic [ref=f7e43]:
+                  - term [ref=f7e44]: 创建时间
+                  - definition [ref=f7e45]: 2026-07-02
+                - generic [ref=f7e46]:
+                  - term [ref=f7e47]: 运行次数
+                  - definition [ref=f7e48]: "3"
+                - generic [ref=f7e49]:
+                  - term [ref=f7e50]: 最近状态
+                  - definition [ref=f7e51]: 已完成
+            - generic [ref=f7e52]:
+              - generic [ref=f7e53]: 已挂载工具集
+              - generic [ref=f7e54]:
+                - generic [ref=f7e57]: rss_military
+                - generic [ref=f7e60]: web_search
+        - generic [ref=f7e61]:
+          - heading "历史运行" [level=2] [ref=f7e62]
+          - generic [ref=f7e63]:
+            - link "2026-07-02 21:33 3 步 · 909 字 已完成 ›" [ref=f7e64] [cursor=pointer]:
+              - /url: /reports/run_f400872e063d
+              - generic [ref=f7e66]:
+                - generic [ref=f7e67]: 2026-07-02 21:33
+                - generic [ref=f7e68]: 3 步 · 909 字
+              - generic [ref=f7e69]: 已完成
+              - generic [ref=f7e70]: ›
+            - link "2026-07-02 17:32 3 步 · 809 字 已完成 ›" [ref=f7e71] [cursor=pointer]:
+              - /url: /reports/run_85976ca4d183
+              - generic [ref=f7e73]:
+                - generic [ref=f7e74]: 2026-07-02 17:32
+                - generic [ref=f7e75]: 3 步 · 809 字
+              - generic [ref=f7e76]: 已完成
+              - generic [ref=f7e77]: ›
+            - link "2026-07-02 17:09 0 步 · 0 字 运行中 ›" [ref=f7e78] [cursor=pointer]:
+              - /url: /reports/run_243973a9ca90
+              - generic [ref=f7e80]:
+                - generic [ref=f7e81]: 2026-07-02 17:09
+                - generic [ref=f7e82]: 0 步 · 0 字
+              - generic [ref=f7e83]: 运行中
+              - generic [ref=f7e84]: ›
+  - alert [ref=f7e85]
