@@ -3,6 +3,8 @@
 import { use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ScheduleSection from "@/components/ScheduleSection";
+import DeleteAgentButton from "@/components/DeleteAgentButton";
+import AgentMemorySection from "@/components/AgentMemorySection";
 import {
   DOMAIN_META,
   STATUS_META,
@@ -32,8 +34,17 @@ export default function AgentDetailPage({
   const [events, setEvents] = useState<SSEEvent[]>([]);
   const [running, setRunning] = useState(false);
   const [done, setDone] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]); // 历史运行多选（对比用）
   const runningRef = useRef(false);
   useEffect(() => { runningRef.current = running; }, [running]);
+
+  const toggleSelect = (id: string) => {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id)
+      : prev.length >= 2 ? [prev[1], id]  // 最多选2个，超出替换最旧
+      : [...prev, id]
+    );
+  };
 
   const load = async (poll = false) => {
     if (!poll) setLoading(true);
@@ -146,12 +157,15 @@ export default function AgentDetailPage({
             <h1 className="text-xl font-semibold">{agent.name}</h1>
             <p className="text-sm text-muted mt-1">{agent.intent}</p>
           </div>
-          <Link
-            href={`/agents/${id}/edit`}
-            className="bg-surface-2 border border-borderc px-3 py-2 rounded-lg text-sm hover:border-primary"
-          >
-            ✎ 编辑
-          </Link>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href={`/agents/${id}/edit`}
+              className="bg-surface-2 border border-borderc px-3 py-2 rounded-lg text-sm hover:border-primary"
+            >
+              ✎ 编辑
+            </Link>
+            <DeleteAgentButton agentId={id} agentName={agent.name} />
+          </div>
         </div>
       </header>
 
@@ -307,12 +321,23 @@ export default function AgentDetailPage({
             </div>
           </div>
           <ScheduleSection agentId={agent.id} />
+          <AgentMemorySection agentId={agent.id} />
         </div>
       </div>
 
       {/* 历史运行 */}
       <div className="px-8 pb-10">
-        <h2 className="text-sm font-semibold text-muted mb-3">历史运行</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-muted">历史运行</h2>
+          {selected.length === 2 && (
+            <Link
+              href={`/reports/compare/${selected[0]}/vs/${selected[1]}`}
+              className="text-xs bg-primary text-on-primary px-3 py-1.5 rounded-lg hover:opacity-90"
+            >
+              对比选中的 2 份 →
+            </Link>
+          )}
+        </div>
         <div className="bg-surface border border-borderc rounded-xl overflow-hidden divide-y divide-borderc">
           {runs.length === 0 ? (
             <div className="p-8 text-center text-sm text-muted">
@@ -321,27 +346,38 @@ export default function AgentDetailPage({
           ) : (
             runs.map((r) => {
               const s = STATUS_META[r.status] || STATUS_META.idle;
+              const checked = selected.includes(r.id);
+              const comparable = r.status === "completed" && r.report_length > 0;
               return (
-                <Link
+                <div
                   key={r.id}
-                  href={`/reports/${r.id}`}
-                  className="p-4 flex items-center gap-3 hover:bg-surface-2 transition-colors"
+                  className={`p-4 flex items-center gap-3 hover:bg-surface-2 transition-colors ${checked ? "bg-primary/5" : ""}`}
                 >
-                  <span
-                    className="w-2 h-2 rounded-full shrink-0"
-                    style={{ background: s.dot }}
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    disabled={!comparable}
+                    onChange={() => toggleSelect(r.id)}
+                    className="w-4 h-4 accent-primary cursor-pointer disabled:opacity-30"
+                    title={comparable ? "选择对比" : "未完成的运行不可对比"}
                   />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-mono">
-                      {r.created_at.slice(0, 16).replace("T", " ")}
+                  <Link href={`/reports/${r.id}`} className="flex-1 min-w-0 flex items-center gap-3">
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ background: s.dot }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-mono">
+                        {r.created_at.slice(0, 16).replace("T", " ")}
+                      </div>
+                      <div className="text-xs text-muted mt-0.5">
+                        {r.steps_count} 步 · {r.report_length} 字
+                      </div>
                     </div>
-                    <div className="text-xs text-muted mt-0.5">
-                      {r.steps_count} 步 · {r.report_length} 字
-                    </div>
-                  </div>
-                  <span className="text-xs text-muted">{s.text}</span>
-                  <span className="text-muted">›</span>
-                </Link>
+                    <span className="text-xs text-muted">{s.text}</span>
+                    <span className="text-muted">›</span>
+                  </Link>
+                </div>
               );
             })
           )}

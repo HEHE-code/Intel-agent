@@ -405,3 +405,55 @@
 - 前端：生成页领域标签从 /api/domains 动态读(替代写死 DOMAIN_META)，含自定义领域真实颜色；保留自定义输入框加新领域
 - 验证：生成"医疗"领域智能体后 /api/domains 自动含"医疗"(preset=False)，下次生成页能看到该标签
 - Files: models.py(CustomDomain), api/domains.py(新), main.py, agents.py(_persist_custom_domain), agents/new/page.tsx(动态领域)
+
+### 7A 报告对比（2026-07-09）
+- **Status:** complete
+- 后端：app/diff.py 段落级diff(按##/###切段，difflib对齐，标added/removed/changed/unchanged+相似度)；reports.py 加 GET /compare/{a}/vs/{b}（校验同agent_id，不同智能体不可比返回400）
+- 前端：api.ts 加 CompareResult/DiffSection 类型；/reports/compare/[a]/vs/[b] Server Component，左右并排渲染+段落状态色(新增绿/删除红/改动橘/未变灰)+统计栏+相似度%；详情页历史运行加多选checkbox(最多2个)+对比按钮跳对比页
+- 验证：compare端点真实跑通(小鹏财经2份报告6段落diff)；对比页渲染正常(左右并排+状态色+统计)
+- 边界：未完成运行不可选(disabled)；不同智能体不可比(400)
+- Files: app/diff.py(新), api/reports.py, frontend api.ts, reports/compare/[a]/vs/[b]/page.tsx(新), agents/[id]/page.tsx(多选)
+
+### 7A 报告对比升级（LLM摘要+行级diff，2026-07-09）
+- **Status:** complete
+- 用户反馈：原对比只标段落不同，没实际用处
+- 升级：①LLM变化摘要(summarize_diff，标[新增]/[删除]/[变化]，严禁编造) ②行级diff高亮(line_diff用difflib.ndiff，绿底新增/红底删除)
+- 后端：diff.py 加 summarize_diff + line_diff；compare端点返回 summary + 每段 line_diff
+- 前端：对比页顶部加AI摘要区，changed段渲染行级diff高亮(+绿/-红)
+- 验证：小鹏财经2报告，LLM摘要精准(新增现金流区间/删除Q4数据/变化盈利预期)；行级diff高亮正常
+- Files: diff.py, api/reports.py, api.ts, compare页
+
+### Phase 10: 报告标注/收藏（2026-07-09）
+- **Status:** complete
+- 后端：RunRecord 加 starred/note 字段（ALTER TABLE 迁移）；crud mark_run；reports 列表+详情返回 starred/note；PUT /api/reports/{id}/mark 端点
+- 前端：ReportsList client组件（☆标星乐观更新+只看收藏筛选+批注预览）；ReportMark client组件（详情页标星+批注编辑保存）；报告列表页改用组件
+- 验证：标星2份→只看收藏筛选出2份；批注"测试批注"显示；详情页标星/批注编辑正常
+- Files: models.py, crud.py, api/reports.py, ReportsList.tsx(新), ReportMark.tsx(新), reports/page.tsx, reports/[id]/page.tsx
+
+### 报告列表改搜索+筛选（删收藏，2026-07-09）
+- **Status:** complete
+- 用户反馈：收藏意义不大（报告一直存在），改搜索+筛选解决"找"的真问题
+- 后端：reports list 端点加 search/agent_id/domain/status 参数（search 搜 agent_name+report_md 全文）
+- 前端：ReportsList 改搜索框(智能体名/预览)+3筛选(智能体/领域/状态)+命中数+清除；删 ReportMark 标星/批注 UI（DB 字段保留无害）
+- 验证：搜"小鹏"筛出相关报告；智能体/领域/状态筛选正常；命中数显示
+
+### 智能体删除（2026-07-09）
+- **Status:** complete
+- 后端：crud delete_agent（级联删 runs via cascade + 删 schedule）；DELETE /api/agents/{id} 端点
+- 前端：DeleteAgentButton client组件（二次确认"删除「X」及其所有运行记录？"→确认删除→跳回仪表台）；详情页头部编辑按钮旁加删除按钮
+- 验证：后端 DELETE 端点 200；前端按钮二次确认 + 跳转
+- Files: crud.py(delete_agent), api/agents.py(DELETE端点), DeleteAgentButton.tsx(新), agents/[id]/page.tsx
+
+### Phase 8: 智能体记忆/累积分析（2026-07-09）
+- **Status:** complete
+- 后端：AgentMemory 表(agent_id/run_id/key_points)；crud add_memory/recent_memories；engine 分析节点读最近3次记忆注入LLM(要求标注"相比上次的变与不变")；运行成功后 _extract_key_points(LLM提取5条≤30字结论)存记忆；GET/DELETE /api/agents/{id}/memory
+- 前端：AgentMemorySection client组件(右侧栏显示历次关键结论+清空)；详情页引入
+- 验证：军事智能体运行后自动存5条结论(海基核威慑成熟/中俄战略协同/美方敦促核军控等)；SSE推"已记入记忆"；详情页记忆区显示；下次运行分析节点会参考
+- Files: models.py(AgentMemory), crud.py, engine.py(读记忆+提取记忆), agents.py(memory端点), AgentMemorySection.tsx(新)
+
+### Phase 11: 自然语言追问报告（2026-07-09）
+- **Status:** complete
+- 后端：POST /api/reports/{id}/ask 端点（基于报告md作system context，多轮history保留最近3轮控token，LLM被约束"必须有报告依据+报告未覆盖明说+不编造"）
+- 前端：ReportAsk client组件（报告页💬追问按钮→右下角浮窗对话框，多轮对话，思考中动画，Enter发送）
+- 验证：curl ask端点基于核潜艇报告回答"最重要结论+依据"，引用报告"关键动态""趋势研判"部分，有依据不编造；前端build成功
+- Files: api/reports.py(ask端点), ReportAsk.tsx(新), reports/[id]/page.tsx

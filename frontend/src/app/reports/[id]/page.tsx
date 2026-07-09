@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { API_BASE, api, type ReportDetail } from "@/lib/api";
 import Markdown from "@/components/Markdown";
+import ReportAsk from "@/components/ReportAsk";
 
 export const dynamic = "force-dynamic";
 
@@ -40,13 +41,16 @@ export default async function ReportPage({
               {report.steps_count} 步
             </p>
           </div>
-          <a
-            href={`${API_BASE}/api/reports/${id}/download`}
-            className="bg-accent text-on-accent px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 flex items-center gap-1.5 shrink-0"
-            download
-          >
-            ↓ 下载 .md
-          </a>
+          <div className="flex items-center gap-2 shrink-0">
+            <ReportAsk runId={id} />
+            <a
+              href={`${API_BASE}/api/reports/${id}/download`}
+              className="bg-accent text-on-accent px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 flex items-center gap-1.5"
+              download
+            >
+              ↓ 下载 .md
+            </a>
+          </div>
         </div>
       </header>
 

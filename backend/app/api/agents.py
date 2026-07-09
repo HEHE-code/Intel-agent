@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from app.crud import create_agent, get_agent, get_schedule, list_agents, list_runs_for_agent, update_agent
+from app.crud import create_agent, delete_agent, get_agent, get_schedule, list_agents, list_runs_for_agent, update_agent
 from app.db import get_session
 from app.engine import run_agent
 from app.intent import parse_intent
@@ -131,6 +131,15 @@ def update(agent_id: str, req: UpdateRequest) -> AgentOut:
         return AgentOut.from_orm(agent)
 
 
+@router.delete("/{agent_id}")
+def remove(agent_id: str) -> dict:
+    """删除智能体（级联删 runs + schedule）。"""
+    with get_session() as s:
+        if not delete_agent(s, agent_id):
+            raise HTTPException(404, "智能体不存在")
+        return {"ok": True}
+
+
 # ============ 运行（SSE 流式） ============
 
 def _sse(event: dict) -> str:
@@ -197,3 +206,29 @@ def active_run(agent_id: str) -> dict:
                     "created_at": r.created_at.isoformat() if r.created_at else "",
                 }
     return {"active": False}
+
+
+@router.get("/{agent_id}/memory")
+def memory(agent_id: str) -> list[dict]:
+    """查看智能体记忆（历次关键结论，旧→新）。"""
+    from app.crud import recent_memories
+    with get_session() as s:
+        mems = list(reversed(recent_memories(s, agent_id, limit=10)))
+        return [
+            {
+                "run_id": m.run_id,
+                "key_points": m.key_points or [],
+                "created_at": m.created_at.isoformat() if m.created_at else "",
+            }
+            for m in mems
+        ]
+
+
+@router.delete("/{agent_id}/memory")
+def clear_memory(agent_id: str) -> dict:
+    """清空智能体记忆。"""
+    from app.models import AgentMemory
+    with get_session() as s:
+        s.query(AgentMemory).filter(AgentMemory.agent_id == agent_id).delete()
+        s.commit()
+    return {"ok": True}

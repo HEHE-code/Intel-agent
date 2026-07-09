@@ -23,3 +23,6 @@ frontend/.env.local
 .idea/
 .vscode/
 *.log
+
+# 测试产物
+.playwright-mcp/

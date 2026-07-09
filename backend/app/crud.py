@@ -65,6 +65,20 @@ def update_agent(
     return agent
 
 
+def delete_agent(session: Session, agent_id: str) -> bool:
+    """删除智能体（级联删 runs + 删 schedule）。返回是否删除成功。"""
+    agent = session.get(AgentConfig, agent_id)
+    if not agent:
+        return False
+    # 删关联 schedule（runs 通过 cascade=all,delete-orphan 自动删）
+    sch = get_schedule(session, agent_id)
+    if sch:
+        session.delete(sch)
+    session.delete(agent)
+    session.flush()
+    return True
+
+
 # ---------- RunRecord ----------
 
 def create_run(session: Session, agent_id: str, run_id: str | None = None) -> RunRecord:
@@ -107,6 +121,41 @@ def update_run(
         run.report_md = report_md
     session.flush()
     return run
+
+
+def mark_run(session: Session, run_id: str, *, starred: bool | None = None, note: str | None = None) -> RunRecord | None:
+    """标星 / 写批注。"""
+    run = session.get(RunRecord, run_id)
+    if not run:
+        return None
+    if starred is not None:
+        run.starred = starred
+    if note is not None:
+        run.note = note
+    session.flush()
+    return run
+
+
+# ---------- AgentMemory（智能体记忆） ----------
+
+def add_memory(session: Session, agent_id: str, run_id: str, key_points: list[str]) -> None:
+    """存本次运行的关键结论到记忆。"""
+    from app.models import AgentMemory
+    session.add(AgentMemory(agent_id=agent_id, run_id=run_id, key_points=key_points))
+    session.flush()
+
+
+def recent_memories(session: Session, agent_id: str, limit: int = 3) -> list:
+    """取最近 N 条记忆（每条含 key_points + 时间）。"""
+    from app.models import AgentMemory
+    return list(
+        session.scalars(
+            select(AgentMemory)
+            .where(AgentMemory.agent_id == agent_id)
+            .order_by(AgentMemory.created_at.desc())
+            .limit(limit)
+        )
+    )
 
 
 # ---------- DomainToolConfig（运行时开关） ----------

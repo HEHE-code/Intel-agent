@@ -16,7 +16,7 @@ from typing import Callable, TypedDict
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import END, START, StateGraph
 
-from app.crud import create_run, get_agent, update_run
+from app.crud import add_memory, create_run, get_agent, update_run
 from app.db import SessionLocal
 from app.llm import build_chat_model, LLMNotConfiguredError
 from app.tools.base import Doc
@@ -211,6 +211,25 @@ def _analyze_node(state: WorkflowState, cb: EventCb | None) -> WorkflowState:
         domain = state.get("domain", "")
         intent = state.get("intent", "")
 
+        # 读取历史记忆（最近 3 次），让分析有连续性
+        from app.db import SessionLocal
+        from app.crud import recent_memories
+        memory_text = ""
+        try:
+            with SessionLocal() as s:
+                mems = recent_memories(s, state.get("agent_id", ""), limit=3)
+                if mems:
+                    lines = []
+                    for m in reversed(mems):  # 旧→新
+                        t = m.created_at.strftime("%m-%d %H:%M") if m.created_at else ""
+                        pts = "；".join(m.key_points[:3]) if m.key_points else ""
+                        lines.append(f"[{t}] {pts}")
+                    memory_text = "\n\n【历史研判记忆（供参考连续性，本次应标注相比上次的变与不变）】\n" + "\n".join(lines)
+                    _emit(cb, {"type": "step_result", "node": "analyze",
+                                "message": f"参考 {len(mems)} 次历史研判记忆"})
+        except Exception as e:
+            log.warning("读取记忆失败: %s", e)
+
         # 领域专用分析指令（教育=择校，需冲稳保分档推理）
         if domain == "education":
             sys = (
@@ -227,13 +246,14 @@ def _analyze_node(state: WorkflowState, cb: EventCb | None) -> WorkflowState:
                 "这是合理推理不算编造；但具体数字必须有出处\n"
                 "6. 输出结构化要点，每个结论都要有依据或推理，不要空泛原则"
             )
-            user = f"用户需求：{intent}\n\n院校资料（含往年分数线）：\n{docs_text}"
+            user = f"用户需求：{intent}\n\n院校资料（含往年分数线）：\n{docs_text}{memory_text}"
         else:
             sys = state.get("prompt_template", "你是情报分析师。") + (
                 "\n\n从以下资料中提炼关键情报：核心事实、关键实体动向、趋势信号、风险点。"
                 "用结构化要点输出，标注来源。给出基于资料的明确判断与可执行建议，不要空泛原则。"
+                "若有历史研判记忆，需在分析中标注'相比上次'的变与不变。"
             )
-            user = f"情报需求：{intent}\n\n资料：\n{docs_text}"
+            user = f"情报需求：{intent}\n\n资料：\n{docs_text}{memory_text}"
 
         # 检查点1：告诉用户分析基于哪些真实资料（非写死）
         docs = state.get("docs", [])
@@ -318,6 +338,31 @@ def _format_docs(docs: list[dict], max_chars: int = 3000) -> str:
         parts.append(snippet)
         total += len(snippet)
     return "\n".join(parts) if parts else "(无资料)"
+
+
+def _extract_key_points(report_md: str) -> list[str]:
+    """用 LLM 从报告提取 3-5 条关键结论，存入智能体记忆。
+
+    只存结论要点（每条≤30字），不存全文，控制记忆长度。
+    """
+    try:
+        llm = build_chat_model(temperature=0)
+        sys = (
+            "从以下情报报告中提取 3-5 条最关键结论，用于后续运行的连续性参考。"
+            "要求：每条≤30字，只记结论不记过程；输出 JSON 数组，如 [\"结论1\",\"结论2\"]，不要其他文字。"
+        )
+        resp = llm.invoke([SystemMessage(content=sys), HumanMessage(content=report_md[:2500])])
+        text = resp.content if isinstance(resp.content, str) else str(resp.content)
+        import json, re
+        text = re.sub(r"^```(?:json)?\s*", "", text.strip()).replace("```", "")
+        m = re.search(r"\[.*\]", text, re.S)
+        if not m:
+            return []
+        pts = json.loads(m.group(0))
+        return [str(p).strip()[:30] for p in pts if str(p).strip()][:5]
+    except Exception as e:
+        log.warning("提取关键结论失败: %s", e)
+        return []
 
 
 # ============ 工作流编排 ============
@@ -405,6 +450,19 @@ def run_agent(agent_id: str, cb: EventCb | None = None) -> dict:
                    steps=list(live_events),
                    report_md=state.get("report_md", ""))
         s.commit()
+
+    # 报告成功则提取关键结论存入智能体记忆（供下次运行参考）
+    if final_status == "completed" and state.get("report_md"):
+        try:
+            key_points = _extract_key_points(state["report_md"])
+            if key_points:
+                with SessionLocal() as s:
+                    add_memory(s, agent_id, run_id, key_points)
+                    s.commit()
+                wrapped_cb({"type": "step_result", "node": "report",
+                            "message": f"已记入智能体记忆：{len(key_points)} 条关键结论"})
+        except Exception as e:
+            log.warning("记忆提取失败: %s", e)
 
     wrapped_cb({"type": "report_ready", "run_id": run_id,
                 "message": "报告已生成", "status": final_status})

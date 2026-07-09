@@ -52,16 +52,38 @@ export interface Template {
 export interface ReportSummary {
   id: string;
   agent_id: string;
+  agent_name?: string;
+  domain?: string;
   status: string;
   created_at: string;
   report_length: number;
   preview: string;
   steps_count: number;
+  starred?: boolean;
+  note?: string;
 }
 
 export interface ReportDetail extends ReportSummary {
   report_md: string;
   steps: any[];
+  starred: boolean;
+  note: string;
+}
+
+export interface DiffSection {
+  title: string;
+  status: "added" | "removed" | "unchanged" | "changed";
+  left: string;
+  right: string;
+  similarity?: number;
+  line_diff?: { type: "added" | "removed" | "unchanged"; content: string }[];
+}
+
+export interface CompareResult {
+  left: { id: string; created_at: string; status: string };
+  right: { id: string; created_at: string; status: string };
+  diff: { sections: DiffSection[] };
+  summary: string;
 }
 
 export interface Schedule {

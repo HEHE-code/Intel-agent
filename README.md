@@ -7,11 +7,15 @@
 ## 功能
 
 - **自然语言生成智能体**：描述需求 → LLM 解析意图（领域/主题/时间/关键实体）→ 自动匹配工具集与提示词 → 入库
-- **三节点工作流 + SSE 实时流**：搜集（领域数据源）→ 分析（LLM 提炼）→ 结论（生成 Markdown 报告），每步实时推送，运行中刷新页面过程不丢
+- **三节点工作流 + SSE 实时流**：搜集（领域数据源）→ 分析（LLM 提炼）→ 结论（生成 Markdown 报告），每步实时推送真实思考内容（资料标题/提炼要点/报告标题），运行中刷新页面过程不丢
 - **5 预设领域 + 自定义领域**：军事 / 金融 / 科技 / 教育 / 公司，支持添加自定义领域（持久化，每个领域不同色）
-- **模板库**：常用情报需求存成模板，一键复用（预置 5 领域通用模板，支持占位符）
-- **定时运行**：单次 / 每天 / 每周，到点自动跑，报告自动存档
-- **报告管理**：Markdown 渲染 + 下载 .md，历史运行可查
+- **模板库**：常用情报需求存成模板，一键复用（预置 5 领域通用模板）
+- **定时运行**：单次 / 每天 / 每周，可视化选择时间，到点自动跑，报告自动存档
+- **报告管理**：Markdown 渲染 + 下载 .md；**搜索 + 筛选**（按智能体/领域/状态/关键词）；历史运行可查
+- **报告对比**：选同智能体两份报告 → AI 变化摘要（新增/删除/变化）+ 行级 diff 高亮
+- **智能体记忆**：每次运行自动提取关键结论存入记忆，下次运行参考"相比上次的变与不变"，报告有连续性
+- **追问报告**：看完报告直接对话追问，LLM 基于报告内容回答（有依据不编造，多轮对话）
+- **智能体删除**：详情页删除（级联清理运行记录+定时配置，二次确认）
 - **明暗双主题**
 
 ## 技术栈
@@ -34,9 +38,10 @@ Intel-agent/
 │   │   ├── api/             # 路由（agents/reports/templates/schedules/domains/health）
 │   │   ├── tools/           # 数据源工具（arxiv/github/finance/rss/tavily/web_search 等）
 │   │   ├── config.py        # 配置（LLM provider 自动识别）
-│   │   ├── engine.py        # LangGraph 三节点工作流 + SSE
+│   │   ├── engine.py        # LangGraph 三节点工作流 + SSE + 记忆
 │   │   ├── intent.py        # LLM 意图解析
 │   │   ├── llm.py           # LLM 抽象层
+│   │   ├── diff.py          # 报告对比（段落级 diff + LLM 变化摘要）
 │   │   ├── models.py        # SQLAlchemy 模型
 │   │   ├── crud.py          # 数据访问层
 │   │   ├── scheduler.py     # APScheduler 定时调度
@@ -45,8 +50,8 @@ Intel-agent/
 │   └── .env.example         # 配置模板（复制为 .env 填 Key）
 ├── frontend/                # Next.js 前端
 │   └── src/
-│       ├── app/             # 6 页 + templates + agents 动态路由
-│       ├── components/      # Sidebar / ThemeProvider / ScheduleSection / Markdown
+│       ├── app/             # 仪表台/生成/详情/编辑/报告/对比/模板/设置 + 动态路由
+│       ├── components/      # Sidebar/ThemeProvider/ScheduleSection/Markdown/ReportsList/ReportAsk/AgentMemorySection/DeleteAgentButton
 │       └── lib/api.ts       # API 客户端 + 类型
 ├── prototype/               # 早期 HTML 原型（验证设计用）
 └── design-system/           # 设计系统 token

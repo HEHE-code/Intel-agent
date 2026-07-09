@@ -45,6 +45,8 @@ class RunRecord(Base):
     status: Mapped[str] = mapped_column(String, default="running")  # running/completed/failed
     steps: Mapped[list] = mapped_column(JSON, default=list)  # 各节点运行日志
     report_md: Mapped[str] = mapped_column(Text, default="")  # 最终 Markdown 报告
+    starred: Mapped[bool] = mapped_column(Boolean, default=False)  # 收藏标星
+    note: Mapped[str] = mapped_column(Text, default="")  # 用户批注
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
     agent: Mapped[AgentConfig] = relationship(back_populates="runs")
@@ -114,4 +116,22 @@ class CustomDomain(Base):
     key: Mapped[str] = mapped_column(String, primary_key=True)  # 如 "能源"
     label: Mapped[str] = mapped_column(String, nullable=False)  # 显示名，同 key
     color: Mapped[str] = mapped_column(String, default="#64748B")  # 标签色
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class AgentMemory(Base):
+    """智能体记忆 —— 历次报告的关键结论，供下次运行参考。
+
+    每次运行后由 LLM 提取本次报告 3-5 条关键结论存入。
+    分析节点读取最近几条记忆，让报告有连续性。
+    """
+
+    __tablename__ = "agent_memory"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    agent_id: Mapped[str] = mapped_column(
+        ForeignKey("agent_config.id", ondelete="CASCADE"), nullable=False
+    )
+    run_id: Mapped[str] = mapped_column(String, nullable=False)  # 来源运行
+    key_points: Mapped[list] = mapped_column(JSON, default=list)  # 3-5 条关键结论
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
