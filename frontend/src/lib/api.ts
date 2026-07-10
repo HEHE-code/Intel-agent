@@ -172,3 +172,17 @@ export async function runAgentStream(
   }
   return final;
 }
+
+export interface AggregateSummary {
+  id: string;
+  name: string;
+  agent_ids: string[];
+  theme: string;
+  status: string;
+  created_at: string;
+  report_length: number;
+}
+
+export interface AggregateDetail extends AggregateSummary {
+  report_md: string;
+}

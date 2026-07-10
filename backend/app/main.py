@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import agents, domains, health, reports, schedules, templates
+from app.api import agents, aggregate, domains, health, reports, schedules, templates
 from app.config import get_settings
 from app.crud import sync_domain_tool_configs
 from app.db import SessionLocal, engine
@@ -55,6 +55,7 @@ app.include_router(reports.router, prefix="/api")
 app.include_router(schedules.router, prefix="/api")
 app.include_router(templates.router, prefix="/api")
 app.include_router(domains.router, prefix="/api")
+app.include_router(aggregate.router, prefix="/api")
 
 
 @app.get("/")

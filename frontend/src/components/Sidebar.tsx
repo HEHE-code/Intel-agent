@@ -9,6 +9,7 @@ const NAV = [
   { href: "/agents/new", label: "新建智能体", icon: "＋" },
   { href: "/templates", label: "模板库", icon: "▤" },
   { href: "/reports", label: "报告", icon: "▤" },
+  { href: "/aggregate", label: "综合研判", icon: "◈" },
   { href: "/settings", label: "设置", icon: "⚙" },
 ];
 

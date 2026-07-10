@@ -158,6 +158,54 @@ def recent_memories(session: Session, agent_id: str, limit: int = 3) -> list:
     )
 
 
+# ---------- AggregateTask（多智能体协同） ----------
+
+def create_aggregate(session: Session, *, name: str, agent_ids: list[str], theme: str = "") -> "AggregateTask":
+    from app.models import AggregateTask
+    agg = AggregateTask(
+        id=f"agg_{uuid.uuid4().hex[:12]}",
+        name=name, agent_ids=agent_ids, theme=theme,
+    )
+    session.add(agg)
+    session.flush()
+    return agg
+
+
+def get_aggregate(session: Session, agg_id: str):
+    from app.models import AggregateTask
+    return session.get(AggregateTask, agg_id)
+
+
+def list_aggregates(session: Session) -> list:
+    from app.models import AggregateTask
+    return list(session.scalars(
+        select(AggregateTask).order_by(AggregateTask.created_at.desc())
+    ))
+
+
+def update_aggregate(session: Session, agg_id: str, *, status: str | None = None, report_md: str | None = None):
+    agg = get_aggregate(session, agg_id)
+    if not agg:
+        return None
+    if status is not None:
+        agg.status = status
+    if report_md is not None:
+        agg.report_md = report_md
+    session.flush()
+    return agg
+
+
+def latest_report_md_for_agent(session: Session, agent_id: str) -> tuple[str, str]:
+    """取某智能体最新 completed 报告的 (md, agent_name)。无则 ("", name)。"""
+    runs = list_runs_for_agent(session, agent_id)
+    for r in runs:
+        if r.status == "completed" and r.report_md:
+            a = get_agent(session, agent_id)
+            return r.report_md, a.name if a else "?"
+    a = get_agent(session, agent_id)
+    return "", a.name if a else "?"
+
+
 # ---------- DomainToolConfig（运行时开关） ----------
 
 def sync_domain_tool_configs(session: Session) -> int:

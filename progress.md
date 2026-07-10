@@ -457,3 +457,10 @@
 - 前端：ReportAsk client组件（报告页💬追问按钮→右下角浮窗对话框，多轮对话，思考中动画，Enter发送）
 - 验证：curl ask端点基于核潜艇报告回答"最重要结论+依据"，引用报告"关键动态""趋势研判"部分，有依据不编造；前端build成功
 - Files: api/reports.py(ask端点), ReportAsk.tsx(新), reports/[id]/page.tsx
+
+### Phase 9: 多智能体协同/综合研判（2026-07-10）
+- **Status:** complete
+- 后端：AggregateTask 表；aggregate.py 综合引擎(取各智能体最新报告→LLM交叉印证综合→综合报告，控token各取2000字)；api/aggregate.py 路由(POST创建+后台线程执行/GET列表/GET详情)
+- 前端：/aggregate 页(client，智能体多选+主题名+分析重点+触发+历史列表点击展开看综合报告)；侧栏加"综合研判"入口
+- 验证：选亚太军演+军事动态+小鹏财经3智能体综合，产出1660字综合报告，真正交叉印证(军演双线策略与核试射战略协同印证、美方跨域应对、财经报告印证战略底座)，非简单拼接
+- Files: models.py(AggregateTask), aggregate.py(新), api/aggregate.py(新), main.py, api.ts, aggregate/page.tsx(新), Sidebar.tsx

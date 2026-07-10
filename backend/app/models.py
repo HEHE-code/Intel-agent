@@ -135,3 +135,20 @@ class AgentMemory(Base):
     run_id: Mapped[str] = mapped_column(String, nullable=False)  # 来源运行
     key_points: Mapped[list] = mapped_column(JSON, default=list)  # 3-5 条关键结论
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class AggregateTask(Base):
+    """多智能体协同 —— 组合多个智能体报告做综合研判。
+
+    选 N 个智能体，取各自最新报告，LLM 综合分析产出综合报告。
+    """
+
+    __tablename__ = "aggregate_task"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)  # agg_xxx
+    name: Mapped[str] = mapped_column(String, nullable=False)  # 综合主题
+    agent_ids: Mapped[list] = mapped_column(JSON, default=list)  # 选中的智能体 id 列表
+    theme: Mapped[str] = mapped_column(Text, default="")  # 综合分析主题
+    report_md: Mapped[str] = mapped_column(Text, default="")  # 综合报告
+    status: Mapped[str] = mapped_column(String, default="running")  # running/completed/failed
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)

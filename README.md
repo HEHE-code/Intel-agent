@@ -15,6 +15,7 @@
 - **报告对比**：选同智能体两份报告 → AI 变化摘要（新增/删除/变化）+ 行级 diff 高亮
 - **智能体记忆**：每次运行自动提取关键结论存入记忆，下次运行参考"相比上次的变与不变"，报告有连续性
 - **追问报告**：看完报告直接对话追问，LLM 基于报告内容回答（有依据不编造，多轮对话）
+- **综合研判**：选多个智能体，AI 跨领域交叉印证各报告，产出综合情报报告（非简单拼接，找关联/印证/矛盾/合力）
 - **智能体删除**：详情页删除（级联清理运行记录+定时配置，二次确认）
 - **明暗双主题**
 
@@ -42,6 +43,7 @@ Intel-agent/
 │   │   ├── intent.py        # LLM 意图解析
 │   │   ├── llm.py           # LLM 抽象层
 │   │   ├── diff.py          # 报告对比（段落级 diff + LLM 变化摘要）
+│   │   ├── aggregate.py     # 多智能体综合研判引擎
 │   │   ├── models.py        # SQLAlchemy 模型
 │   │   ├── crud.py          # 数据访问层
 │   │   ├── scheduler.py     # APScheduler 定时调度
@@ -50,7 +52,7 @@ Intel-agent/
 │   └── .env.example         # 配置模板（复制为 .env 填 Key）
 ├── frontend/                # Next.js 前端
 │   └── src/
-│       ├── app/             # 仪表台/生成/详情/编辑/报告/对比/模板/设置 + 动态路由
+│       ├── app/             # 仪表台/生成/详情/编辑/报告/对比/模板/综合研判/设置 + 动态路由
 │       ├── components/      # Sidebar/ThemeProvider/ScheduleSection/Markdown/ReportsList/ReportAsk/AgentMemorySection/DeleteAgentButton
 │       └── lib/api.ts       # API 客户端 + 类型
 ├── prototype/               # 早期 HTML 原型（验证设计用）
@@ -142,6 +144,9 @@ CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://<前端IP>:3000
 2. **运行**：进详情页点「运行」→ 实时看搜集/分析/结论步骤 → 完成后看报告
 3. **定时**：详情页设单次/每天/每周 → 到点自动跑
 4. **模板**：`/templates` 页从模板新建，或把常用智能体存为模板
+5. **对比**：详情页历史运行勾选 2 份 → AI 变化摘要 + 行级 diff
+6. **追问**：报告页点「追问」→ 基于报告内容多轮对话
+7. **综合研判**：`/aggregate` 选多个智能体 → AI 跨领域交叉印证 → 综合报告
 
 ## 已知限制
 
